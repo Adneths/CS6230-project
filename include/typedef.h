@@ -16,29 +16,29 @@ template<typename T>
 struct Vector {
     int len;
     T* data;
-    Matrix() : len(0), data(nullptr) {}
-    Matrix(int  len, T* data) : len(len), data(data) {}
+    Vector() : len(0), data(nullptr) {}
+    Vector(int  len, T* data) : len(len), data(data) {}
 };
 template<typename T>
 struct SpVector {
     int len, nnz;
     int* ind;
     T* data;
-    Matrix() : len(0), nnz(0), ind(nullptr), data(nullptr) {}
-    Matrix(int len, int nnz, int* ind, T* data) : len(len), nnz(nnz), ind(ind), data(data) {}
-    Matrix(int len, T* arr) : len(len), nnz(0) {
+    SpVector() : len(0), nnz(0), ind(nullptr), data(nullptr) {}
+    SpVector(int len, int nnz, int* ind, T* data) : len(len), nnz(nnz), ind(ind), data(data) {}
+    SpVector(int len, T* arr) : len(len), nnz(0) {
         nnz = 0;
         for (int i = 0; i < len; i++)
             if (arr[i] != 0)
                 nnz++;
-        ind = malloc(nnz * sizeof(int));
-        data = malloc(nnz * sizeof(T));
+        ind = (int*)malloc(nnz * sizeof(int));
+        data = (T*)malloc(nnz * sizeof(T));
 
         int t = 0;
         for (int i = 0; i < len; i++)
             if (arr[i] != 0) {
                 ind[t] = i;
-                data[t] = arr[i]
+                data[t] = arr[i];
             }
     }
 };
