@@ -5,6 +5,6 @@
 
 namespace cuda
 {
-    CSRMatrix<double> *spmm(CSRMatrix<double> *A, double *DenseMatrixB);
+    CSRMatrix<double> *spmm(CSRMatrix<double> *A, dense_mat<double> *DenseMatrixB);
 }
 #endif

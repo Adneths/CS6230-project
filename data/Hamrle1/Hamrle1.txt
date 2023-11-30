@@ -1,0 +1,12 @@
+%-------------------------------------------------------------------------------
+% UF Sparse Matrix Collection, Tim Davis
+% http://www.cise.ufl.edu/research/sparse/matrices/Hamrle/Hamrle1
+% name: Hamrle/Hamrle1
+% [Hamrle/Hamrle1 circuit simulation matrix]
+% id: 1199
+% date: 2004
+% author: J. Hamrle
+% ed: T. Davis
+% fields: name title A b id date author ed kind
+% kind: circuit simulation problem
+%-------------------------------------------------------------------------------
