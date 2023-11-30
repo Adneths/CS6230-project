@@ -28,7 +28,7 @@ CUDA_SOURCES = SpGEMM_cuda.cu SpGEMM_cusparse.cu SpMSpV_cuda.cu Spmm_cuda.cu
 INCLUDE_HEADERS = ./$(INCLUDE_PATH)/$(shell echo $(HEADERS) | sed 's/ / \.\/$(INCLUDE_PATH)\//g')
 SRC_SOURCES= ./$(SRC_PATH)/$(shell echo $(SOURCES) | sed 's/ / \.\/$(SRC_PATH)\//g')
 SRC_CUDA_SOURCES= ./$(SRC_PATH)/$(shell echo $(CUDA_SOURCES) | sed 's/ / \.\/$(SRC_PATH)\//g')
-SPMVSPV_SRC_SOURCES= ./$(SRC_PATH)/$(shell echo $(SPMSPVSRC) | sed 's/ / \.\/$(SRC_PATH)\//g')
+SPMSPV_SRC_SOURCES= ./$(SRC_PATH)/$(shell echo $(SPMSPVSRC) | sed 's/ / \.\/$(SRC_PATH)\//g')
 SPMMSRC_SOURCES= ./$(SRC_PATH)/$(shell echo $(SPMMSRC) | sed 's/ / \.\/$(SRC_PATH)\//g')
 
 all: sparse profile

@@ -106,6 +106,8 @@ int main(int argc, char **argv) {
     if (spm == NULL)
         return 1;
     printf("%s: ", argv[1]);
+	struct sparse_matrix_t* csc_spm = load_sparse_matrix(file_format, filename);
+    CSCMatrix<double>* csc_matrix = new CSCMatrix<double>((struct csc_matrix_t*)csc_spm->repr);
     struct csr_matrix_t* csr_mat = csc_to_csr((struct csc_matrix_t*)spm->repr);
     CSRMatrix<double>* matrix = new CSRMatrix<double>(csr_mat);
     //double data[16] = {0,0,0,0, 0,0,0,1, 0,0,0,0, 0,1,0,1};
@@ -115,17 +117,18 @@ int main(int argc, char **argv) {
     LF_SpVector<double>* lfsp_vecdriven, lfsp_rand;
     
     double sparsity = 0.15
-    sp_rand = cuda::gen_rand_spvec(matrix.cols, sparsity)
+    sp_rand = cuda::gen_rand_spvec(matrix.cols, sparsity);
     lfsp_rand = new lfsp_rand(sp_rand);
     sp_matdriven = cuda::spmspv_naive_matdriven(matrix, sp_rand);
-    lfsp_vecdriven = cuda::spmspv_naive_vecdriven(matrix, lfsp_rand);
+    
+    lfsp_vecdriven = cuda::spmspv_naive_vecdriven(csc_matrix, lfsp_rand);
     // result_cusparse = cusparse::spgemm(matrix, matrix);
     //std::cout << matrix << std::endl;
     //std::cout << result_cuda << std::endl;
     //std::cout << result_cusparse << std::endl;
 
     printf("Cuda Results: ");
-    printf("matdriven output equals vecdriven output: %d",static_cast<int>(sp_matdriven == lfsp_vecdriven));
+    printf("matdriven output equals vecdriven output: %d",static_cast<int>(*sp_matdriven == *lfsp_vecdriven));
     // if (result_cuda) result_cuda->info(); else printf("nullptr\n");
     // printf("CuSparse Results: ");
     // if (result_cusparse) result_cusparse->info(); else printf("nullptr\n");
@@ -138,8 +141,8 @@ int main(int argc, char **argv) {
     delete matrix;
     delete sp_matdriven;
     delete lfsp_vecdriven;
-    delete sp_rand;
-    delete lfsp_rand;
+    // delete sp_rand;
+    // delete lfsp_rand;
 
 	return 0;
 }
