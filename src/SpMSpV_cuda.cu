@@ -146,7 +146,7 @@ __global__ void spmspv_naive_vecdriven_dacc(int rowsA, int colsA, int* colPtrA, 
         }
     }
     // synchronize()
-    __syncthreads(); // does this work?
+    __syncthreads(); // need synchronize in wider range
 
     for (int i = 0; i < colsA; i++) {
         vecC[indB_x] += dataC[indB_x * colsA + i];

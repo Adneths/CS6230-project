@@ -121,6 +121,8 @@ int main(int argc, char **argv) {
     lfsp_rand = new LF_SpVector<double>(*sp_rand);
     sp_matdriven = cuda::spmspv_naive_matdriven(matrix, sp_rand);
     
+    printf("In main:\n");
+    printf("csc_matrix.cols: %d", csc_matrix->cols);
     lfsp_vecdriven = cuda::spmspv_naive_vecdriven(csc_matrix, lfsp_rand);
     // result_cusparse = cusparse::spgemm(matrix, matrix);
     //std::cout << matrix << std::endl;
