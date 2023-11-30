@@ -58,7 +58,7 @@ struct LF_SpVector {
     struct listformat_element<T>* elements;
     LF_SpVector() :len(0), nnz(0), elements(nullptr) {}
     LF_SpVector(int len, int nnz, struct listformat_element<T>* elements) {}
-    LF_SpVector(struct Vector<T> v) : len(v.len){
+    LF_SpVector(struct Vector<T> v) : len(v.len) {
         nnz = 0;
         for (int i = 0; i < len; i++) {
             if (v.data[i] != 0)
@@ -68,6 +68,21 @@ struct LF_SpVector {
         int t = 0;
         for (int i = 0; i < len; i++) {
             if (v.data[i] != 0) {
+                elements[t].idx = i;
+                elements[t++].data = v.data[i];
+            }
+        }
+    }
+    LF_SpVector(int len, T* arr) :len(len) {
+        nnz = 0;
+        for (int i = 0; i < len; i++) {
+            if (arr[i] != 0)
+                nzz++;
+        }
+        elements = (struct listformat_element*)malloc(nnz * sizeof(listformat_element<T>));
+        int t = 0;
+        for (int i = 0; i < len; i++) {
+            if (arr[i] != 0) {
                 elements[t].idx = i;
                 elements[t++].data = v.data[i];
             }

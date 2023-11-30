@@ -61,6 +61,7 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
     cudaMemcpy(d_indB, B->ind, indB_size, cudaMemcpyHostToDevice);
     cudaMemcpy(d_dataValB, B->data, dataValB_size, cudaMemcpyHostToDevice);
     cudaMemcpy(d_dataValB, B->dataVal, dataValB_size, cudaMemcpyHostToDevice);
+    cudaMemset(d_dataValC, 0, dataValC_size);
 
     dim3 threadsPerBlock(32*((A->rows+31)/32));
     dim3 numBlocks((A->rows + threadsPerBlock - 1)/threadsPerBlock);
@@ -96,8 +97,90 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
     return ret;
 }
 
-LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<double>* B){
+__global__ void spmspv_naive_vecdriven_dacc(int rowsA, int cols A, int colPtrA, int* dataRowA, doulbe*dataValA, int lenB, int nnzB, listformat_element<double>* elementsB, double* dataC, double* vecC) {
+    int tx = threadIdx.x; int bx = blockIdx.x;
+    if (bx * blockDim.x + threadIdx < lenB) {
+        int indB_x = elementsB[bx * blockDim.x + threadIdx]->idx;
+        double valB = elementsB[bx * blockDim.x + threadIdx]->data;
+        int as = colPtrA[indB_x]; int ae = colPtr[indB_x+1];
+        for (int i = as; i < ae; i++) {
+            dataC[dataRowA[i]][indB_x] = dataValA[i] * valB;
+        }
+    }
+    // synchronize()
+    __syncthreads() // does this work?
 
+    for (int i = 0; i < colsA; i++) {
+        vecC[indB_x] += data[i][indB_x];
+    }
+
+}
+
+LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<double>* B){
+    if (A->cols != B->len) {
+        printf("#Cols of the Matrix dosen't match Len of the Vector!\n");
+        return nullptr;
+    }
+#ifdef PROFILE
+    Timer timer;
+    auto time = timer.tick();
+#endif
+    int *d_colPtrA, *d_dataRowA;
+    double *d_dataValA, *d_dataValC, *d_dataVecC, *h_dataValC;
+    listformat_element<double>* d_elements_B;
+
+    size_t
+    colPtrA_size  = (A->cols+1) * sizeof(int),
+    dataRowA_size = (A->nnz) * sizeof(int),
+    dataValA_size = (A->nnz) * sizeof(double),
+    elementsB_size = (B->nnz) * sizeof(listformat_element<double>)
+    datavalC_size = (A->cols * B->len) * sizeof(double);
+    datavecC_size = (B->len) * sizeof(double)
+
+    cudaMalloc(&d_colPtrA , colPtrA_size );
+    cudaMalloc(&d_dataRowA, dataRowA_size);
+    cudaMalloc(&d_dataValA, dataValA_size);
+    cudaMalloc(&d_elements_B, elementsB_size);
+    cudaMalloc(&d_dataValC, dataValC_size);
+
+    cudaMemcpy(d_colPtrA , A->colPtr , colPtrA_size , cudaMemcpyHostToDevice);
+    cudaMemcpy(d_dataRowA, A->dataRow, dataRowA_size, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_dataValA, A->dataVal, dataValA_size, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_elements_B, B->elements, elementsB_size, cudaMemcpyHostToDevice);
+    cudaMemset(d_dataValC, 0, dataValC_size);
+    cudaMemset(d_dataVecC, 0, dataVecC_size);
+
+    dim3 threadsPerBlock(32*((B->len+31)/32));
+    dim3 numBlocks((B->len + threadsPerBlock - 1)/threadsPerBlock);
+#ifdef PROFILE
+    time = timer.tick();
+    std::cout << "Cuda Setup: " << time << std::endl;
+    timer.tick();
+#endif
+
+    spmspv_naive_vecdriven_dacc<<<numBlocks, threadsPerBlock>>>(A->rows, A->cols, d_colPtrA, d_dataRowA, d_dataValA, B->len, B->nnz, d_elements_B, d_dataValC, d_dataVecC);
+
+#ifdef PROFILE
+    time = timer.tick();
+    std::cout << "Cuda Compute: " << time << std::endl;
+    timer.tick();
+#endif
+
+    h_dataValC = (double*) malloc(dataValC_size);
+    cudaMemcpy(h_dataValC, d_datVecC, dataVecC_size, cudaMemcpyDeviceToHost);
+    LF_SpVector<double>* ret = new LF_SpVector<double>(B->len, h_dataValC);
+    
+    cudaFree(d_colPtrA );
+    cudaFree(d_dataRowA);
+    cudaFree(d_dataValA);
+    cudaFree(d_elements_B);
+    cudaFree(d_dataValC);
+#ifdef PROFILE
+    time = timer.tick();
+    std::cout << "Cuda Teardown: " << time << std::endl;
+#endif
+
+    return ret;
 }
 
 }
