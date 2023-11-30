@@ -114,18 +114,17 @@ int main(int argc, char **argv) {
     CSCMatrix<double>* csc_matrix = new CSCMatrix<double>((struct csc_matrix_t*)csc_spm->repr);
     printf("In main:\n");
     printf("csc_matrix->cols: %d\n", csc_matrix->cols);
+    printf("csc_matrix addr:%d\n", csc_matrix);
 
+    // struct csr_matrix_t* csr_mat = csc_to_csr((struct csc_matrix_t*)spm->repr);
+    // CSRMatrix<double>* matrix = new CSRMatrix<double>(csr_mat);
 
-    struct csr_matrix_t* csr_mat = csc_to_csr((struct csc_matrix_t*)spm->repr);
-    CSRMatrix<double>* matrix = new CSRMatrix<double>(csr_mat);
-    //double data[16] = {0,0,0,0, 0,0,0,1, 0,0,0,0, 0,1,0,1};
-    //CSRMatrix<double>* matrix = new CSRMatrix<double>(4, 4, data);
-    matrix->info();
+    // matrix->info();
     SpVector<double> *sp_matdriven, *sp_cusparse, *sp_rand;
     LF_SpVector<double> *lfsp_vecdriven, *lfsp_rand;
     
     double sparsity = 0.15;
-    sp_rand = cuda::gen_rand_spvec(matrix->cols, sparsity);
+    sp_rand = cuda::gen_rand_spvec(csc_matrix->cols, sparsity);
     lfsp_rand = new LF_SpVector<double>(*sp_rand);
     // sp_matdriven = cuda::spmspv_naive_matdriven(matrix, sp_rand);
 
