@@ -112,10 +112,7 @@ int main(int argc, char **argv) {
         return 1;
     }
     CSCMatrix<double>* csc_matrix = new CSCMatrix<double>((struct csc_matrix_t*)csc_spm->repr);
-    printf("In main:\n");
-    printf("csc_smp->repr->m: %d\n", ((struct csc_matrix_t*)(csc_spm->repr))->m);
-    printf("csc_matrix.cols: %d\n", csc_matrix->cols);
-    printf("spm != csc_spm: %d\n", static_cast<int>(spm==csc_spm));
+
 
     struct csr_matrix_t* csr_mat = csc_to_csr((struct csc_matrix_t*)spm->repr);
     CSRMatrix<double>* matrix = new CSRMatrix<double>(csr_mat);
@@ -130,7 +127,11 @@ int main(int argc, char **argv) {
     lfsp_rand = new LF_SpVector<double>(*sp_rand);
     // sp_matdriven = cuda::spmspv_naive_matdriven(matrix, sp_rand);
     
-    printf("csc_matrix addr:%d", csc_matrix);
+    printf("In main:\n");
+    printf("csc_smp->repr->m: %d\n", ((struct csc_matrix_t*)(csc_spm->repr))->m);
+    printf("csc_matrix->cols: %d\n", csc_matrix->cols);
+    printf("spm != csc_spm: %d\n", static_cast<int>(spm!=csc_spm));
+    printf("csc_matrix addr:%d\n", csc_matrix);
     lfsp_vecdriven = cuda::spmspv_naive_vecdriven(csc_matrix, lfsp_rand);
     // result_cusparse = cusparse::spgemm(matrix, matrix);
     //std::cout << matrix << std::endl;

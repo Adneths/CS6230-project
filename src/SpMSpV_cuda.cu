@@ -156,8 +156,8 @@ __global__ void spmspv_naive_vecdriven_dacc(int rowsA, int colsA, int* colPtrA, 
 
 LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<double>* B){
     if (A->cols != B->len) {
-        printf("In spmspv_naive_vecdriven:");
-        printf("A addr:%d", A);
+        printf("In spmspv_naive_vecdriven:\n");
+        printf("A addr:%d\n", A);
         printf("#Cols of the Matrix dosen't match Len of the Vector!\n");
         printf("A->cols %d\n",A->cols);
         printf("B->len %d\n", B->len);
