@@ -17,19 +17,23 @@ NVCCFLAGS += $(INCLUDE_PATHS)
 
 INCLUDE_PATH = include
 SRC_PATH = src
+INCLUDE_PATHS += -I$(INCLUDE_PATH)
 
 SOURCES = main.cpp
 HEADERS = typedef.h timer.h SpGEMM_cuda.h SpGEMM_cusparse.h
 CUDA_SOURCES = SpGEMM_cuda.cu SpGEMM_cusparse.cu
 
+INCLUDE_HEADERS = ./$(INCLUDE_PATH)/$(shell echo $(HEADERS) | sed 's/ / \.\/$(INCLUDE_PATH)\//g')
+SRC_SOURCES= ./$(SRC_PATH)/$(shell echo $(SOURCES) | sed 's/ / \.\/$(SRC_PATH)\//g')
+SRC_CUDA_SOURCES= ./$(SRC_PATH)/$(shell echo $(CUDA_SOURCES) | sed 's/ / \.\/$(SRC_PATH)\//g')
+
 all: main profile
 
-main: $(SOURCES) $(HEADERS) $(CUDA_SOURCES)
-#	CC $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
-	nvcc $(NVCCFLAGS) $(SOURCES) $(CUDA_SOURCES) -o $@ $(LDFLAGS)
+main: $(SRC_SOURCES) $(INCLUDE_HEADERS) $(SRC_CUDA_SOURCES)
+	nvcc $(NVCCFLAGS) $(SRC_SOURCES) $(SRC_CUDA_SOURCES) -o $@ $(LDFLAGS)
 
-profile: $(SOURCES) $(HEADERS) $(CUDA_SOURCES)
-	nvcc $(NVCCFLAGS) $(SOURCES) $(CUDA_SOURCES) -D PROFILE -o $@ $(LDFLAGS)
+profile: $(SRC_SOURCES) $(INCLUDE_HEADERS) $(SRC_CUDA_SOURCES)
+	nvcc $(NVCCFLAGS) $(SRC_SOURCES) $(SRC_CUDA_SOURCES) -D PROFILE -o $@ $(LDFLAGS)
 
 clean:
 	rm -f main profile *.o
