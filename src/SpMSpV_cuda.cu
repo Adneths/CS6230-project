@@ -92,8 +92,14 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
     cudaMemcpy(d_dataValB, B->data, dataValB_size, cudaMemcpyHostToDevice);
     cudaMemset(d_dataValC, 0, dataValC_size);
 
-    dim3 threadsPerBlock(32*((A->rows+31)/32));
-    dim3 numBlocks((A->rows + threadsPerBlock - 1)/threadsPerBlock);
+    dim3 threadsPerBlock(32 * ((A->rows + 31) / 32));
+
+    // Calculate the number of blocks as an integer first
+    int numBlocksInt = (A->rows + threadsPerBlock.x - 1) / threadsPerBlock.x;
+    
+    // Then use this integer to create a dim3 object
+    dim3 numBlocks(numBlocksInt);
+    
 #ifdef PROFILE
     time = timer.tick();
     std::cout << "Cuda Setup: " << time << std::endl;
@@ -181,8 +187,14 @@ LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<do
     cudaMemset(d_dataValC, 0, dataValC_size);
     cudaMemset(d_dataVecC, 0, dataVecC_size);
 
-    dim3 threadsPerBlock(32*((B->len+31)/32));
-    dim3 numBlocks((B->len + threadsPerBlock - 1)/threadsPerBlock);
+    dim3 threadsPerBlock(32 * ((A->rows + 31) / 32));
+
+    // Calculate the number of blocks as an integer first
+    int numBlocksInt = (A->rows + threadsPerBlock.x - 1) / threadsPerBlock.x;
+    
+    // Then use this integer to create a dim3 object
+    dim3 numBlocks(numBlocksInt);
+    
 #ifdef PROFILE
     time = timer.tick();
     std::cout << "Cuda Setup: " << time << std::endl;
