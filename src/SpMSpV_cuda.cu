@@ -3,6 +3,7 @@
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
 #include <random>
+#include <cfloat>
 
 #include "device_launch_parameters.h"
 
@@ -40,11 +41,11 @@ SpVector<double>* gen_rand_spvec(int len, double sparsity) {
 
 
 
-__global__ void spmspv_naive_matdriven_dacc(int rowsA, int cols A, int rowPtrA, int* dataColA, doulbe*dataValA, int lenB, int nnzB, int* indB, double* dataB, double* dataC) {
-    int tx = threadIdx.x; int bx = blockIdx.x;
-    int rowA_x = bx * blockDim.x + threadIdx;
+__global__ void spmspv_naive_matdriven_dacc(int rowsA, int cols A, int* rowPtrA, int* dataColA, double* dataValA, int lenB, int nnzB, int* indB, double* dataB, double* dataC) {
+    int tx = threadIdx.x; int bx = blockIdx.x; int bm = blockDim.x;
+    int rowA_x = bx * bm + tx;
     if (rowA_x < rowsA) {
-        int as = rowPtrA[rowA_x]; int ae = rowPtr[rowA_x+1];
+        int as = rowPtrA[rowA_x]; int ae = rowPtrA[rowA_x+1];
         for (int i = as; i < ae; i++) {
             double valA = dataValA[i]; int c = dataColA[i];
 
@@ -88,7 +89,7 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
     cudaMemcpy(d_dataValA, A->dataVal, dataValA_size, cudaMemcpyHostToDevice);
     cudaMemcpy(d_indB, B->ind, indB_size, cudaMemcpyHostToDevice);
     cudaMemcpy(d_dataValB, B->data, dataValB_size, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_dataValB, B->dataVal, dataValB_size, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_dataValB, B->data, dataValB_size, cudaMemcpyHostToDevice);
     cudaMemset(d_dataValC, 0, dataValC_size);
 
     dim3 threadsPerBlock(32*((A->rows+31)/32));

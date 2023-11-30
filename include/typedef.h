@@ -247,7 +247,7 @@ struct CSCMatrix
         }
     }
     CSCMatrix(struct csc_matrix_t *mat)
-        : src(mat), rows(csc_matrix_num_rows(mat)), cols(csc_matrix_num_cols(mat)),
+        : src(mat), rows(mat->m), cols(mat->n),
           nnz(mat->nnz), colPtr(mat->colptr), dataRow(mat->rowidx), dataVal((T *)mat->values)
     {
         if (mat->value_type == value_type_t::PATTERN)
