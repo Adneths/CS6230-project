@@ -8,6 +8,6 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
 
 LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<double>* B);
 
-// SpVector<double>* gen_rand_spvec(int len, double sparsity);
+SpVector<double>* gen_rand_spvec(int len, double sparsity, int* ind, double* data);
 }
 #endif

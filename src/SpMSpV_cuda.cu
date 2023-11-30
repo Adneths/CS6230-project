@@ -15,13 +15,17 @@
 
 namespace cuda {
 
-SpVector<double>* gen_rand_spvec(int len, double sparsity) {
+SpVector<double>* gen_rand_spvec(int len, double sparsity, int* ind, double* data) {
     if (len <= 0 || sparsity <= 0 || sparsity >= 1) {
         printf("invalid sparsity: %d", sparsity);
         return nullptr;
     }
-    int* ind = (int*)malloc(sizeof(int));
-    double* data = (double*)malloc(sizeof(double));
+    if (ind == nullptr || data == nullptr) {
+        printf("ind or data still null\n");
+        return nullptr;
+    }
+    // int* ind = (int*)malloc(sizeof(int));
+    // double* data = (double*)malloc(sizeof(double));
     std::random_device rd;  
     std::mt19937 gen(rd()); 
 
