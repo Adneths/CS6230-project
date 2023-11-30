@@ -108,6 +108,10 @@ int main(int argc, char **argv) {
     printf("%s: ", argv[1]);
 	struct sparse_matrix_t* csc_spm = load_sparse_matrix(file_format, filename);
     CSCMatrix<double>* csc_matrix = new CSCMatrix<double>((struct csc_matrix_t*)csc_spm->repr);
+    printf("In main:\n");
+    printf("csc_smp->repr->m: %d\n", csc_spm->repr->m);
+    printf("csc_matrix.cols: %d\n", csc_matrix->cols);
+
     struct csr_matrix_t* csr_mat = csc_to_csr((struct csc_matrix_t*)spm->repr);
     CSRMatrix<double>* matrix = new CSRMatrix<double>(csr_mat);
     //double data[16] = {0,0,0,0, 0,0,0,1, 0,0,0,0, 0,1,0,1};
@@ -121,8 +125,6 @@ int main(int argc, char **argv) {
     lfsp_rand = new LF_SpVector<double>(*sp_rand);
     sp_matdriven = cuda::spmspv_naive_matdriven(matrix, sp_rand);
     
-    printf("In main:\n");
-    printf("csc_matrix.cols: %d", csc_matrix->cols);
     lfsp_vecdriven = cuda::spmspv_naive_vecdriven(csc_matrix, lfsp_rand);
     // result_cusparse = cusparse::spgemm(matrix, matrix);
     //std::cout << matrix << std::endl;
