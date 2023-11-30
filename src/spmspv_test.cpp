@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
 	struct sparse_matrix_t* csc_spm = load_sparse_matrix(file_format, filename);
     CSCMatrix<double>* csc_matrix = new CSCMatrix<double>((struct csc_matrix_t*)csc_spm->repr);
     printf("In main:\n");
-    printf("csc_smp->repr->m: %d\n", csc_spm->repr->m);
+    printf("csc_smp->repr->m: %d\n", (struct csc_matrix_t*)csc_spm->repr->m);
     printf("csc_matrix.cols: %d\n", csc_matrix->cols);
 
     struct csr_matrix_t* csr_mat = csc_to_csr((struct csc_matrix_t*)spm->repr);
