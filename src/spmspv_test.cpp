@@ -112,6 +112,8 @@ int main(int argc, char **argv) {
         return 1;
     }
     CSCMatrix<double>* csc_matrix = new CSCMatrix<double>((struct csc_matrix_t*)csc_spm->repr);
+    printf("In main:\n");
+    printf("csc_matrix->cols: %d\n", csc_matrix->cols);
 
 
     struct csr_matrix_t* csr_mat = csc_to_csr((struct csc_matrix_t*)spm->repr);
@@ -126,7 +128,7 @@ int main(int argc, char **argv) {
     sp_rand = cuda::gen_rand_spvec(matrix->cols, sparsity);
     lfsp_rand = new LF_SpVector<double>(*sp_rand);
     // sp_matdriven = cuda::spmspv_naive_matdriven(matrix, sp_rand);
-    
+
     printf("In main:\n");
     printf("csc_smp->repr->m: %d\n", ((struct csc_matrix_t*)(csc_spm->repr))->m);
     printf("csc_matrix->cols: %d\n", csc_matrix->cols);
