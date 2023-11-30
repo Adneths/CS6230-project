@@ -4,7 +4,7 @@
 #include "typedef.h"
 
 namespace cuda {
-LF_SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, LF_SpVector<double>* B);
+LF_SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>* B);
 
 LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<double>* B);
 }
