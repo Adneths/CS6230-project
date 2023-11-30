@@ -128,10 +128,11 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
 
 __global__ void spmspv_naive_vecdriven_dacc(int rowsA, int colsA, int* colPtrA, int* dataRowA, double* dataValA, int lenB, int nnzB, listformat_element<double>* elementsB, double* dataC, double* vecC) {
     int tx = threadIdx.x; int bx = blockIdx.x;
+    int indB_x = elementsB[bx * blockDim.x + threadIdx.x]->idx;
+    double valB = elementsB[bx * blockDim.x + threadIdx.x]->data;
     if (bx * blockDim.x + threadIdx.x < lenB) {
-        int indB_x = elementsB[bx * blockDim.x + threadIdx.x]->idx;
-        double valB = elementsB[bx * blockDim.x + threadIdx.x]->data;
-        int as = colPtrA[indB_x]; int ae = colPtr[indB_x+1];
+
+        int as = colPtrA[indB_x]; int ae = colPtrA[indB_x+1];
         for (int i = as; i < ae; i++) {
             dataC[dataRowA[i]][indB_x] = dataValA[i] * valB;
         }
@@ -171,6 +172,7 @@ LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<do
     cudaMalloc(&d_dataValA, dataValA_size);
     cudaMalloc(&d_elements_B, elementsB_size);
     cudaMalloc(&d_dataValC, dataValC_size);
+    cudaMalloc(&d_dataVecC, dataVecC_size);
 
     cudaMemcpy(d_colPtrA , A->colPtr , colPtrA_size , cudaMemcpyHostToDevice);
     cudaMemcpy(d_dataRowA, A->dataRow, dataRowA_size, cudaMemcpyHostToDevice);
@@ -196,7 +198,7 @@ LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<do
 #endif
 
     h_dataValC = (double*) malloc(dataValC_size);
-    cudaMemcpy(h_dataValC, d_datVecC, dataVecC_size, cudaMemcpyDeviceToHost);
+    cudaMemcpy(h_dataValC, d_dataVecC, dataVecC_size, cudaMemcpyDeviceToHost);
     LF_SpVector<double>* ret = new LF_SpVector<double>(B->len, h_dataValC);
     
     cudaFree(d_colPtrA );
