@@ -126,11 +126,11 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
     return ret;
 }
 
-__global__ void spmspv_naive_vecdriven_dacc(int rowsA, int colsA, int colPtrA, int* dataRowA, doulbe*dataValA, int lenB, int nnzB, listformat_element<double>* elementsB, double* dataC, double* vecC) {
+__global__ void spmspv_naive_vecdriven_dacc(int rowsA, int colsA, int* colPtrA, int* dataRowA, double* dataValA, int lenB, int nnzB, listformat_element<double>* elementsB, double* dataC, double* vecC) {
     int tx = threadIdx.x; int bx = blockIdx.x;
-    if (bx * blockDim.x + threadIdx < lenB) {
-        int indB_x = elementsB[bx * blockDim.x + threadIdx]->idx;
-        double valB = elementsB[bx * blockDim.x + threadIdx]->data;
+    if (bx * blockDim.x + threadIdx.x < lenB) {
+        int indB_x = elementsB[bx * blockDim.x + threadIdx.x]->idx;
+        double valB = elementsB[bx * blockDim.x + threadIdx.x]->data;
         int as = colPtrA[indB_x]; int ae = colPtr[indB_x+1];
         for (int i = as; i < ae; i++) {
             dataC[dataRowA[i]][indB_x] = dataValA[i] * valB;
