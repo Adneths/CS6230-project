@@ -41,7 +41,7 @@ SpVector<double>* gen_rand_spvec(int len, double sparsity) {
 
 
 
-__global__ void spmspv_naive_matdriven_dacc(int rowsA, int cols A, int* rowPtrA, int* dataColA, double* dataValA, int lenB, int nnzB, int* indB, double* dataB, double* dataC) {
+__global__ void spmspv_naive_matdriven_dacc(int rowsA, int colsA, int* rowPtrA, int* dataColA, double* dataValA, int lenB, int nnzB, int* indB, double* dataB, double* dataC) {
     int tx = threadIdx.x; int bx = blockIdx.x; int bm = blockDim.x;
     int rowA_x = bx * bm + tx;
     if (rowA_x < rowsA) {
