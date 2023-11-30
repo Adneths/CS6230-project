@@ -147,8 +147,12 @@ int main(int argc, char **argv) {
     //std::cout << result_cuda << std::endl;
     //std::cout << result_cusparse << std::endl;
 
+    std::cout << "input_csr_mat:\n" << matrix << std::endl;
+    std::cout << "input csc_mat:\n" << csc_matrix << std:endl;
+    
+
     printf("Cuda Results: ");
-    printf("matdriven output equals vecdriven output: %d",static_cast<int>(*sp_matdriven == *lfsp_vecdriven));
+    printf("matdriven output equals vecdriven output: %d\n",static_cast<int>(*sp_matdriven == *lfsp_vecdriven));
     // if (result_cuda) result_cuda->info(); else printf("nullptr\n");
     // printf("CuSparse Results: ");
     // if (result_cusparse) result_cusparse->info(); else printf("nullptr\n");

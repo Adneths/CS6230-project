@@ -361,6 +361,16 @@ std::ostream &operator<<(std::ostream &stream, CSRMatrix<T> *mat)
 }
 
 template <typename T>
+std::ostream &operator<<(std::ostream &stream, CSCMatrix<T> *mat)
+{
+    CSRMatrix<T> * tmp = new CSRMatrix<T>(mat)
+    stream << tmp;
+    delete tmp;
+    
+    return stream;
+}
+
+template <typename T>
 bool operator==(const CSCMatrix<T> &a, const CSCMatrix<T> &b)
 {
     if (a->colPtr == nullptr || a->dataRow == nullptr || a->dataVal == nullptr)
