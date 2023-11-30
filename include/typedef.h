@@ -51,23 +51,28 @@ struct SpVector
     SpVector(int len, double sparsity) : len(len) {
         if (len <= 0 || sparsity <= 0 || sparsity >= 1) {
         printf("invalid sparsity: %d", sparsity);
-        return nullptr;
-    }
-        ind = (int*)malloc(sizeof(int));
-        data = (double*)malloc(sizeof(double));
-        std::random_device rd;  
-        std::mt19937 gen(rd()); 
-
-        // Define the distribution to be uniform between 0 and 1
-        // Note that std::uniform_real_distribution is half-open [a, b), so we use 0 and nextafter(1, DBL_MAX) to mimic (0, 1)
-        std::uniform_real_distribution<> dis(std::nextafter(0, DBL_MAX), std::nextafter(1, DBL_MAX)); 
+        ind = nullptr;
+        data = nullptr;
         nnz = 0;
-        for (int i = 0; i < len; i++)
-            if (dis(gen) < sparsity) {
-                ind[nnz] = i;
-                data[nnz++] = 1.0;
-            }
-    }
+        }
+        else {
+            ind = (int*)malloc(sizeof(int));
+            data = (double*)malloc(sizeof(double));
+            std::random_device rd;  
+            std::mt19937 gen(rd()); 
+
+            // Define the distribution to be uniform between 0 and 1
+            // Note that std::uniform_real_distribution is half-open [a, b), so we use 0 and nextafter(1, DBL_MAX) to mimic (0, 1)
+            std::uniform_real_distribution<> dis(std::nextafter(0, DBL_MAX), std::nextafter(1, DBL_MAX)); 
+            nnz = 0;
+            for (int i = 0; i < len; i++)
+                if (dis(gen) < sparsity) {
+                    ind[nnz] = i;
+                    data[nnz++] = 1.0;
+                }
+        }
+    }   
+
 };
 
 template <typename T>
