@@ -19,7 +19,7 @@ namespace cuda
         {
                 int tx = threadIdx.x;
                 int bx = blockIdx.x;
-                if (tx < colsB)
+                if (tx < num_colB)
                 {
                         int as = rowPtrA[bx];
                         int ae = rowPtrA[bx + 1];
@@ -28,7 +28,7 @@ namespace cuda
                                 double valA = dataValA[i];
                                 int c = dataColA[i];
 
-                                double valB = dense_matrix[c * colsB + tx];
+                                double valB = dense_matrix[c * num_colB + tx];
 
                                 dataValC[bx * colsB + tx] += valA * valB;
                         }
@@ -49,7 +49,7 @@ namespace cuda
                     dataColA_size = (A->nnz) * sizeof(int),
                     dataValA_size = (A->nnz) * sizeof(double),
                     DenseMatrixB_size = (DenseMatrixB->total_size) * sizeof(double),
-                    dataValC_size = (A->rows * DenseVectorB->cols) * sizeof(double);
+                    dataValC_size = (A->rows * DenseMatrixB->col_num) * sizeof(double);
 
                 cudaMalloc(&d_rowPtrA, rowPtrA_size);
                 cudaMalloc(&d_dataColA, dataColA_size);
@@ -72,7 +72,7 @@ namespace cuda
 #endif
 
                 spmm_kx<<<numBlocks, threadsPerBlock>>>(d_rowPtrA, d_dataColA, d_dataValA,
-                                                        MatrixOnGpu, DenseMatrixB->num_col,
+                                                        MatrixOnGpu, DenseMatrixB->col_num,
                                                         d_dataValC);
 #ifdef PROFILE
                 time = timer.tick();
