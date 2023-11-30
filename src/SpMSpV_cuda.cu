@@ -74,8 +74,8 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
     dataColA_size = (A->nnz) * sizeof(int),
     dataValA_size = (A->nnz) * sizeof(double),
     indB_size = (B->nnz) * sizeof(int),
-    datavalB_size = (B->nnz) * sizeof(double),
-    datavalC_size = (B->len) * sizeof(double);
+    dataValB_size = (B->nnz) * sizeof(double),
+    dataValC_size = (B->len) * sizeof(double);
 
     cudaMalloc(&d_rowPtrA , rowPtrA_size );
     cudaMalloc(&d_dataColA, dataColA_size);
@@ -126,7 +126,7 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
     return ret;
 }
 
-__global__ void spmspv_naive_vecdriven_dacc(int rowsA, int cols A, int colPtrA, int* dataRowA, doulbe*dataValA, int lenB, int nnzB, listformat_element<double>* elementsB, double* dataC, double* vecC) {
+__global__ void spmspv_naive_vecdriven_dacc(int rowsA, int colsA, int colPtrA, int* dataRowA, doulbe*dataValA, int lenB, int nnzB, listformat_element<double>* elementsB, double* dataC, double* vecC) {
     int tx = threadIdx.x; int bx = blockIdx.x;
     if (bx * blockDim.x + threadIdx < lenB) {
         int indB_x = elementsB[bx * blockDim.x + threadIdx]->idx;
@@ -137,7 +137,7 @@ __global__ void spmspv_naive_vecdriven_dacc(int rowsA, int cols A, int colPtrA, 
         }
     }
     // synchronize()
-    __syncthreads() // does this work?
+    __syncthreads(); // does this work?
 
     for (int i = 0; i < colsA; i++) {
         vecC[indB_x] += data[i][indB_x];
@@ -162,9 +162,9 @@ LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<do
     colPtrA_size  = (A->cols+1) * sizeof(int),
     dataRowA_size = (A->nnz) * sizeof(int),
     dataValA_size = (A->nnz) * sizeof(double),
-    elementsB_size = (B->nnz) * sizeof(listformat_element<double>)
-    datavalC_size = (A->cols * B->len) * sizeof(double);
-    datavecC_size = (B->len) * sizeof(double)
+    elementsB_size = (B->nnz) * sizeof(listformat_element<double>),
+    dataValC_size = (A->cols * B->len) * sizeof(double),
+    dataVecC_size = (B->len) * sizeof(double);
 
     cudaMalloc(&d_colPtrA , colPtrA_size );
     cudaMalloc(&d_dataRowA, dataRowA_size);
