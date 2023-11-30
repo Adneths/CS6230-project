@@ -30,7 +30,7 @@ namespace cuda
 
                                 double valB = dense_matrix[c * num_colB + tx];
 
-                                dataValC[bx * colsB + tx] += valA * valB;
+                                dataValC[bx * num_colB + tx] += valA * valB;
                         }
                 }
         }
