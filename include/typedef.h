@@ -4,12 +4,14 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <random>
 
 extern "C"
 {
 #include <bebop/smc/sparse_matrix.h>
 #include <bebop/smc/sparse_matrix_ops.h>
 #include <bebop/smc/csr_matrix.h>
+#include <bebop/smc/csc_matrix.h>
 }
 
 template <typename T>
@@ -89,7 +91,7 @@ struct LF_SpVector
         for (int i = 0; i < len; i++)
         {
             if (arr[i] != 0)
-                nzz++;
+                nnz++;
         }
         elements = (struct listformat_element<T> *)malloc(nnz * sizeof(listformat_element<T>));
         int t = 0;
@@ -98,7 +100,7 @@ struct LF_SpVector
             if (arr[i] != 0)
             {
                 elements[t].idx = i;
-                elements[t++].data = v.data[i];
+                elements[t++].data = arr[i];
             }
         }
     }
