@@ -366,7 +366,7 @@ std::ostream &operator<<(std::ostream &stream, CSCMatrix<T> *mat)
     if (mat->colPtr == nullptr || mat->dataRow == nullptr || mat->dataVal == nullptr)
         return stream << "Invalid Matrix";
 
-    stream << "CSCMatrix" << mat->rows << "x" << mat->cols << ": " << mat->nnz << std::endl;
+    stream << "CSCMatrix:  " << mat->rows << "x" << mat->cols << ": " << mat->nnz << std::endl;
 
     for (int r = 0; r < mat->cols; r++)
     {
