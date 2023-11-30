@@ -104,9 +104,11 @@ struct LF_SpVector
             }
         }
     }
-    LF_SpVector(struct SpVector<T> v) : len(v.len), nnz(v.nnz) {
+    LF_SpVector(struct SpVector<T> v) : len(v.len), nnz(v.nnz)
+    {
         elements = (struct listformat_element<T> *)malloc(nnz * sizeof(listformat_element<T>));
-        for (int i = 0; i < nnz; i++) {
+        for (int i = 0; i < nnz; i++)
+        {
             elements[i].data = v.data[i];
             elements[i].idx = v.ind[i];
         }
@@ -282,26 +284,27 @@ struct CSCMatrix
 };
 
 template <typename T>
-struct dense_vec
+struct dense_mat
 {
     int row_num;
-    int cols = 1;
-    T *vector;
-    dense_vec(int row_num) : row_num(row_num), vector(new T[row_num])
+    int col_num;
+    int total_size;
+    T *matrix;
+    dense_mat(int row_num, int col_num) : row_num(row_num), col_num(col_num), total_size(row_num * col_num), (new T[total_size])
     {
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_real_distribution<T> dis(-100, 100);
 
-        for (int i = 0; i < row_num; i++)
+        for (int i = 0; i < total_size; i++)
         {
-            vector[i] = dis(gen);
+            matrix[i] = dis(gen);
         }
     }
 
-    ~dense_vec()
+    ~dense_mat()
     {
-        delete[] vector;
+        delete[] matrix;
     }
 };
 
