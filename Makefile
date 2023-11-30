@@ -27,13 +27,13 @@ INCLUDE_HEADERS = ./$(INCLUDE_PATH)/$(shell echo $(HEADERS) | sed 's/ / \.\/$(IN
 SRC_SOURCES= ./$(SRC_PATH)/$(shell echo $(SOURCES) | sed 's/ / \.\/$(SRC_PATH)\//g')
 SRC_CUDA_SOURCES= ./$(SRC_PATH)/$(shell echo $(CUDA_SOURCES) | sed 's/ / \.\/$(SRC_PATH)\//g')
 
-all: main profile
+all: sparse profile
 
-main: $(SRC_SOURCES) $(INCLUDE_HEADERS) $(SRC_CUDA_SOURCES)
+sparse: $(SRC_SOURCES) $(INCLUDE_HEADERS) $(SRC_CUDA_SOURCES)
 	nvcc $(NVCCFLAGS) $(SRC_SOURCES) $(SRC_CUDA_SOURCES) -o $@ $(LDFLAGS)
 
 profile: $(SRC_SOURCES) $(INCLUDE_HEADERS) $(SRC_CUDA_SOURCES)
 	nvcc $(NVCCFLAGS) $(SRC_SOURCES) $(SRC_CUDA_SOURCES) -D PROFILE -o $@ $(LDFLAGS)
 
 clean:
-	rm -f main profile *.o
+	rm -f sparse profile *.o
