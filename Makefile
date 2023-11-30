@@ -20,7 +20,7 @@ SRC_PATH = src
 INCLUDE_PATHS += -I$(INCLUDE_PATH)
 
 SOURCES = main.cpp
-SPMSPVSRC = spv_test.cpp
+SPMSPVSRC = spmspv_test.cpp
 SPMMSRC = spmm_test.cpp
 HEADERS = typedef.h timer.h SpGEMM_cuda.h SpGEMM_cusparse.h SpMSpV_cuda.h Spmm_cuda.h
 CUDA_SOURCES = SpGEMM_cuda.cu SpGEMM_cusparse.cu SpMSpV_cuda.cu Spmm_cuda.cu

@@ -133,7 +133,8 @@ int main(int argc, char **argv)
     // CSRMatrix<double>* matrix = new CSRMatrix<double>(4, 4, data);
     matrix->info();
     // std::cout << matrix << std::endl;
-    dense_mat<double> *dense_matrix(matrix->cols, matrix->cols);
+    // dense_mat<double> *dense_matrix(matrix->cols, matrix->cols);
+    dense_mat<double> *dense_matrix = new dense_mat<double>(matrix->rows, matrix->cols);
     CSRMatrix<double> *spmm_result_cuda, *spmm_result_cusparse;
     spmm_result_cuda = cuda::spmm(matrix, dense_matrix);
     // spmm_result_cusparse = cusparse::spmv(matrix, dense_vector);
@@ -141,8 +142,8 @@ int main(int argc, char **argv)
 
     // std::cout << result_cusparse << std::endl;
 
-    printf("Cuda Results: ");
-    if (result_cuda)
+    printf("SPMM Cuda Results: ");
+    if (spmm_result_cuda)
         spmm_result_cuda->info();
     else
         printf("nullptr\n");
