@@ -21,13 +21,15 @@ INCLUDE_PATHS += -I$(INCLUDE_PATH)
 
 SOURCES = main.cpp
 SPMSPVSRC = spv_test.cpp
-HEADERS = typedef.h timer.h SpGEMM_cuda.h SpGEMM_cusparse.h SpMSpV_cuda.h
-CUDA_SOURCES = SpGEMM_cuda.cu SpGEMM_cusparse.cu SpMSpV_cuda.cu
+SPMMSRC = spmm_test.cpp
+HEADERS = typedef.h timer.h SpGEMM_cuda.h SpGEMM_cusparse.h SpMSpV_cuda.h Spmm_cuda.h
+CUDA_SOURCES = SpGEMM_cuda.cu SpGEMM_cusparse.cu SpMSpV_cuda.cu Spmm_cuda.cu
 
 INCLUDE_HEADERS = ./$(INCLUDE_PATH)/$(shell echo $(HEADERS) | sed 's/ / \.\/$(INCLUDE_PATH)\//g')
 SRC_SOURCES= ./$(SRC_PATH)/$(shell echo $(SOURCES) | sed 's/ / \.\/$(SRC_PATH)\//g')
 SRC_CUDA_SOURCES= ./$(SRC_PATH)/$(shell echo $(CUDA_SOURCES) | sed 's/ / \.\/$(SRC_PATH)\//g')
 SPMVSPV_SRC_SOURCES= ./$(SRC_PATH)/$(shell echo $(SPMSPVSRC) | sed 's/ / \.\/$(SRC_PATH)\//g')
+SPMMSRC_SOURCES= ./$(SRC_PATH)/$(shell echo $(SPMMSRC) | sed 's/ / \.\/$(SRC_PATH)\//g')
 
 all: sparse profile
 
@@ -43,5 +45,10 @@ spmspv: $(SPMSPV_SRC_SOURCES) $(INCLUDE_HEADERS) $(SRC_CUDA_SOURCES)
 spmspv_profile: $(SPMSPV_SRC_SOURCES) $(INCLUDE_HEADERS) $(SRC_CUDA_SOURCES)
 	nvcc $(NVCCFLAGS) $(SPMSPV_SRC_SOURCES) $(SRC_CUDA_SOURCES) -D PROFILE -o $@ $(LDFLAGS)
 
+spmm: $(SPMMSRC_SOURCES) $(INCLUDE_HEADERS) $(SRC_CUDA_SOURCES)
+	nvcc $(NVCCFLAGS) $(SPMMSRC_SOURCES) $(SRC_CUDA_SOURCES) -o $@ $(LDFLAGS)
+
+spmm_profile: $(SPMMSRC_SOURCES) $(INCLUDE_HEADERS) $(SRC_CUDA_SOURCES)
+	nvcc $(NVCCFLAGS) $(SPMMSRC_SOURCES) $(SRC_CUDA_SOURCES) -D PROFILE -o $@ $(LDFLAGS)
 clean:
 	rm -f sparse profile *.o
