@@ -107,6 +107,10 @@ int main(int argc, char **argv) {
         return 1;
     printf("%s: ", argv[1]);
 	struct sparse_matrix_t* csc_spm = load_sparse_matrix(file_format, filename);
+    if (csc_spm == NULL) {
+        printf("NULL Loaded.\n");
+        return 1;
+    }
     CSCMatrix<double>* csc_matrix = new CSCMatrix<double>((struct csc_matrix_t*)csc_spm->repr);
     printf("In main:\n");
     printf("csc_smp->repr->m: %d\n", (struct csc_matrix_t*)csc_spm->repr->m);
