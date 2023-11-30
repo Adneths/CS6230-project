@@ -2,6 +2,8 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
+#include <random>
+
 #include "device_launch_parameters.h"
 
 #include "SpMSpV_cuda.h"
@@ -11,6 +13,32 @@
 #endif
 
 namespace cuda {
+
+SpVector<double>* gen_rand_spvec(int len, double sparsity) {
+    if (len <= 0 || sparsity <= 0 || sparsity >= 1) {
+        printf("invalid sparsity: %d", sparsity);
+        return nullptr;
+    }
+    int* ind = (int*)malloc(sizeof(int));
+    double* data = (double*)malloc(sizeof(double));
+    std::random_device rd;  
+    std::mt19937 gen(rd()); 
+
+    // Define the distribution to be uniform between 0 and 1
+    // Note that std::uniform_real_distribution is half-open [a, b), so we use 0 and nextafter(1, DBL_MAX) to mimic (0, 1)
+    std::uniform_real_distribution<> dis(std::nextafter(0, DBL_MAX), std::nextafter(1, DBL_MAX)); 
+    int nnz = 0;
+    for (int i = 0; i < len; i++)
+        if (dis(gen) < sparsity) {
+            ind[nnz] = i;
+            data[nnz++] = 1.0;
+        }
+    return new SpVector(len, nnz, ind, data);
+    
+}
+
+
+
 
 __global__ void spmspv_naive_matdriven_dacc(int rowsA, int cols A, int rowPtrA, int* dataColA, doulbe*dataValA, int lenB, int nnzB, int* indB, double* dataB, double* dataC) {
     int tx = threadIdx.x; int bx = blockIdx.x;

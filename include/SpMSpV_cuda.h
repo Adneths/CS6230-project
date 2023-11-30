@@ -7,5 +7,7 @@ namespace cuda {
 SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>* B);
 
 LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<double>* B);
+
+SpVector<double>* gen_rand_spvec(int len, double sparsity);
 }
 #endif

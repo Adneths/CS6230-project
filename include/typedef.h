@@ -72,7 +72,7 @@ struct LF_SpVector
             if (v.data[i] != 0)
                 nnz++;
         }
-        elements = (struct listformat_element *)malloc(nnz * sizeof(listformat_element<T>));
+        elements = (struct listformat_element<T> *)malloc(nnz * sizeof(listformat_element<T>));
         int t = 0;
         for (int i = 0; i < len; i++)
         {
@@ -91,7 +91,7 @@ struct LF_SpVector
             if (arr[i] != 0)
                 nzz++;
         }
-        elements = (struct listformat_element *)malloc(nnz * sizeof(listformat_element<T>));
+        elements = (struct listformat_element<T> *)malloc(nnz * sizeof(listformat_element<T>));
         int t = 0;
         for (int i = 0; i < len; i++)
         {
@@ -100,6 +100,13 @@ struct LF_SpVector
                 elements[t].idx = i;
                 elements[t++].data = v.data[i];
             }
+        }
+    }
+    LF_SpVector(struct SpVector<T> v) : len(v.len), nnz(v.nnz) {
+        elements = (struct listformat_element<T> *)malloc(nnz * sizeof(listformat_element<T>));
+        for (int i = 0; i < nnz; i++) {
+            elements[i].data = v.data[i];
+            elements[i].idx = v.ind[i];
         }
     }
 };
@@ -388,6 +395,25 @@ std::ostream &operator<<(std::ostream &stream, CSRMatrix<T> *mat)
             stream << std::endl;
     }
     return stream;
+}
+
+template <typename T>
+bool operator==(const SpVector<T> &a, const LF_SpVector<T> &b)
+{
+    if (a->ind == nullptr || a->data == nullptr)
+        return false;
+    if (b->elements == nullptr)
+        return false;
+    if (a->len != b->len || a->nnz != b->nnz)
+        return false;
+
+    for (int i = 0; i < a->len; i++)
+        if (a->ind[i] != b->elements[i].idx)
+            return false;
+    for (int i = 0; i < a->nnz; i++)
+        if (a->data[i] != b->elements[i].data)
+            return false;
+    return true;
 }
 
 #endif
