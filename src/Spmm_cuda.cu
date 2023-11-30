@@ -28,7 +28,7 @@ namespace cuda
                                 double valA = dataValA[i];
                                 int c = dataColA[i];
 
-                                double valB = dense_matrix[c * colsB + tx];
+                                double valB = dense_matrix[c * num_colB + tx];
 
                                 dataValC[bx * colsB + tx] += valA * valB;
                         }
