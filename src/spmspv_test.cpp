@@ -113,8 +113,9 @@ int main(int argc, char **argv) {
     }
     CSCMatrix<double>* csc_matrix = new CSCMatrix<double>((struct csc_matrix_t*)csc_spm->repr);
     printf("In main:\n");
-    printf("csc_smp->repr->m: %d\n", (struct csc_matrix_t*)csc_spm->repr->m);
+    printf("csc_smp->repr->m: %d\n", ((struct csc_matrix_t*)(csc_spm->repr))->m);
     printf("csc_matrix.cols: %d\n", csc_matrix->cols);
+    printf("spm != csc_spm: %d", static_cast<int>(spm==csc_spm));
 
     struct csr_matrix_t* csr_mat = csc_to_csr((struct csc_matrix_t*)spm->repr);
     CSRMatrix<double>* matrix = new CSRMatrix<double>(csr_mat);
