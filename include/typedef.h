@@ -405,18 +405,18 @@ bool operator==(const CSCMatrix<T> &a, const CSCMatrix<T> &b)
 template <typename T>
 bool operator==(const SpVector<T> &a, const LF_SpVector<T> &b)
 {
-    if (a->ind == nullptr || a->data == nullptr)
+    if (a.ind == nullptr || a.data == nullptr)
         return false;
-    if (b->elements == nullptr)
+    if (b.elements == nullptr)
         return false;
-    if (a->len != b->len || a->nnz != b->nnz)
+    if (a.len != b.len || a.nnz != b.nnz)
         return false;
 
-    for (int i = 0; i < a->len; i++)
-        if (a->ind[i] != b->elements[i].idx)
+    for (int i = 0; i < a.len; i++)
+        if (a.ind[i] != b.elements[i].idx)
             return false;
-    for (int i = 0; i < a->nnz; i++)
-        if (a->data[i] != b->elements[i].data)
+    for (int i = 0; i < a.nnz; i++)
+        if (a.data[i] != b.elements[i].data)
             return false;
     return true;
 }

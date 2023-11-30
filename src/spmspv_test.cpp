@@ -117,8 +117,8 @@ int main(int argc, char **argv) {
     LF_SpVector<double> *lfsp_vecdriven, *lfsp_rand;
     
     double sparsity = 0.15;
-    sp_rand = cuda::gen_rand_spvec(matrix.cols, sparsity);
-    lfsp_rand = new lfsp_rand<double>(sp_rand);
+    sp_rand = cuda::gen_rand_spvec(matrix->cols, sparsity);
+    lfsp_rand = new LF_SpVector<double>(sp_rand);
     sp_matdriven = cuda::spmspv_naive_matdriven(matrix, sp_rand);
     
     lfsp_vecdriven = cuda::spmspv_naive_vecdriven(csc_matrix, lfsp_rand);
