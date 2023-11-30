@@ -41,7 +41,7 @@ SpVector<double>* gen_rand_spvec(int len, double sparsity) {
 
 
 
-__global__ void spmspv_naive_matdriven_dacc(int rowsA, int cols A, int* rowPtrA, int* dataColA, double* dataValA, int lenB, int nnzB, int* indB, double* dataB, double* dataC) {
+__global__ void spmspv_naive_matdriven_dacc(int rowsA, int colsA, int* rowPtrA, int* dataColA, double* dataValA, int lenB, int nnzB, int* indB, double* dataB, double* dataC) {
     int tx = threadIdx.x; int bx = blockIdx.x; int bm = blockDim.x;
     int rowA_x = bx * bm + tx;
     if (rowA_x < rowsA) {
@@ -74,8 +74,8 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
     dataColA_size = (A->nnz) * sizeof(int),
     dataValA_size = (A->nnz) * sizeof(double),
     indB_size = (B->nnz) * sizeof(int),
-    datavalB_size = (B->nnz) * sizeof(double),
-    datavalC_size = (B->len) * sizeof(double);
+    dataValB_size = (B->nnz) * sizeof(double),
+    dataValC_size = (B->len) * sizeof(double);
 
     cudaMalloc(&d_rowPtrA , rowPtrA_size );
     cudaMalloc(&d_dataColA, dataColA_size);
@@ -92,8 +92,14 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
     cudaMemcpy(d_dataValB, B->data, dataValB_size, cudaMemcpyHostToDevice);
     cudaMemset(d_dataValC, 0, dataValC_size);
 
-    dim3 threadsPerBlock(32*((A->rows+31)/32));
-    dim3 numBlocks((A->rows + threadsPerBlock - 1)/threadsPerBlock);
+    dim3 threadsPerBlock(32 * ((A->rows + 31) / 32));
+
+    // Calculate the number of blocks as an integer first
+    int numBlocksInt = (A->rows + threadsPerBlock.x - 1) / threadsPerBlock.x;
+    
+    // Then use this integer to create a dim3 object
+    dim3 numBlocks(numBlocksInt);
+    
 #ifdef PROFILE
     time = timer.tick();
     std::cout << "Cuda Setup: " << time << std::endl;
@@ -126,21 +132,22 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
     return ret;
 }
 
-__global__ void spmspv_naive_vecdriven_dacc(int rowsA, int cols A, int colPtrA, int* dataRowA, doulbe*dataValA, int lenB, int nnzB, listformat_element<double>* elementsB, double* dataC, double* vecC) {
+__global__ void spmspv_naive_vecdriven_dacc(int rowsA, int colsA, int* colPtrA, int* dataRowA, double* dataValA, int lenB, int nnzB, listformat_element<double>* elementsB, double* dataC, double* vecC) {
     int tx = threadIdx.x; int bx = blockIdx.x;
-    if (bx * blockDim.x + threadIdx < lenB) {
-        int indB_x = elementsB[bx * blockDim.x + threadIdx]->idx;
-        double valB = elementsB[bx * blockDim.x + threadIdx]->data;
-        int as = colPtrA[indB_x]; int ae = colPtr[indB_x+1];
+    int indB_x = elementsB[bx * blockDim.x + threadIdx.x].idx;
+    double valB = elementsB[bx * blockDim.x + threadIdx.x].data;
+    if (bx * blockDim.x + threadIdx.x < lenB) {
+
+        int as = colPtrA[indB_x]; int ae = colPtrA[indB_x+1];
         for (int i = as; i < ae; i++) {
-            dataC[dataRowA[i]][indB_x] = dataValA[i] * valB;
+            dataC[dataRowA[i]*colsA+indB_x] = dataValA[i] * valB;
         }
     }
     // synchronize()
-    __syncthreads() // does this work?
+    __syncthreads(); // does this work?
 
     for (int i = 0; i < colsA; i++) {
-        vecC[indB_x] += data[i][indB_x];
+        vecC[indB_x] += dataC[i * colsA + indB_x];
     }
 
 }
@@ -162,15 +169,16 @@ LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<do
     colPtrA_size  = (A->cols+1) * sizeof(int),
     dataRowA_size = (A->nnz) * sizeof(int),
     dataValA_size = (A->nnz) * sizeof(double),
-    elementsB_size = (B->nnz) * sizeof(listformat_element<double>)
-    datavalC_size = (A->cols * B->len) * sizeof(double);
-    datavecC_size = (B->len) * sizeof(double)
+    elementsB_size = (B->nnz) * sizeof(listformat_element<double>),
+    dataValC_size = (A->cols * B->len) * sizeof(double),
+    dataVecC_size = (B->len) * sizeof(double);
 
     cudaMalloc(&d_colPtrA , colPtrA_size );
     cudaMalloc(&d_dataRowA, dataRowA_size);
     cudaMalloc(&d_dataValA, dataValA_size);
     cudaMalloc(&d_elements_B, elementsB_size);
     cudaMalloc(&d_dataValC, dataValC_size);
+    cudaMalloc(&d_dataVecC, dataVecC_size);
 
     cudaMemcpy(d_colPtrA , A->colPtr , colPtrA_size , cudaMemcpyHostToDevice);
     cudaMemcpy(d_dataRowA, A->dataRow, dataRowA_size, cudaMemcpyHostToDevice);
@@ -179,8 +187,14 @@ LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<do
     cudaMemset(d_dataValC, 0, dataValC_size);
     cudaMemset(d_dataVecC, 0, dataVecC_size);
 
-    dim3 threadsPerBlock(32*((B->len+31)/32));
-    dim3 numBlocks((B->len + threadsPerBlock - 1)/threadsPerBlock);
+    dim3 threadsPerBlock(32 * ((A->rows + 31) / 32));
+
+    // Calculate the number of blocks as an integer first
+    int numBlocksInt = (A->rows + threadsPerBlock.x - 1) / threadsPerBlock.x;
+    
+    // Then use this integer to create a dim3 object
+    dim3 numBlocks(numBlocksInt);
+    
 #ifdef PROFILE
     time = timer.tick();
     std::cout << "Cuda Setup: " << time << std::endl;
@@ -196,7 +210,7 @@ LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<do
 #endif
 
     h_dataValC = (double*) malloc(dataValC_size);
-    cudaMemcpy(h_dataValC, d_datVecC, dataVecC_size, cudaMemcpyDeviceToHost);
+    cudaMemcpy(h_dataValC, d_dataVecC, dataVecC_size, cudaMemcpyDeviceToHost);
     LF_SpVector<double>* ret = new LF_SpVector<double>(B->len, h_dataValC);
     
     cudaFree(d_colPtrA );
