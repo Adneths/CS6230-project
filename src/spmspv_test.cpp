@@ -113,12 +113,12 @@ int main(int argc, char **argv) {
     //double data[16] = {0,0,0,0, 0,0,0,1, 0,0,0,0, 0,1,0,1};
     //CSRMatrix<double>* matrix = new CSRMatrix<double>(4, 4, data);
     matrix->info();
-    SpVector<double>* sp_matdriven, sp_cusparse, sp_rand;
-    LF_SpVector<double>* lfsp_vecdriven, lfsp_rand;
+    SpVector<double> *sp_matdriven, *sp_cusparse, *sp_rand;
+    LF_SpVector<double> *lfsp_vecdriven, *lfsp_rand;
     
-    double sparsity = 0.15
+    double sparsity = 0.15;
     sp_rand = cuda::gen_rand_spvec(matrix.cols, sparsity);
-    lfsp_rand = new lfsp_rand(sp_rand);
+    lfsp_rand = new lfsp_rand<double>(sp_rand);
     sp_matdriven = cuda::spmspv_naive_matdriven(matrix, sp_rand);
     
     lfsp_vecdriven = cuda::spmspv_naive_vecdriven(csc_matrix, lfsp_rand);
