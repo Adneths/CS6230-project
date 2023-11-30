@@ -13,7 +13,18 @@
 namespace cuda {
 
 __global__ void spmspv_naive_matdriven_dacc(int rowsA, int cols A, int rowPtrA, int* dataColA, doulbe*dataValA, int lenB, int nnzB, int* indB, double* dataB, double* dataC) {
+    int tx = threadIdx.x; int bx = blockIdx.x;
+    int rowA_x = bx * blockDim.x + threadIdx;
+    if (rowA_x < rowsA) {
+        int as = rowPtrA[rowA_x]; int ae = rowPtr[rowA_x+1];
+        for (int i = as; i < ae; i++) {
+            double valA = dataValA[i]; int c = dataColA[i];
 
+            for (int j = 0; j < nnzB; j++)
+                if (indB[j] == c)
+                    dataC[rowA_x] += valA * dataB[j];
+        }
+    }  
 }
 
 
@@ -51,8 +62,8 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
     cudaMemcpy(d_dataValB, B->data, dataValB_size, cudaMemcpyHostToDevice);
     cudaMemcpy(d_dataValB, B->dataVal, dataValB_size, cudaMemcpyHostToDevice);
 
-    dim3 threadsPerBlock(32*((B->cols+31)/32));
-    dim3 numBlocks(A->rows);
+    dim3 threadsPerBlock(32*((A->rows+31)/32));
+    dim3 numBlocks((A->rows + threadsPerBlock - 1)/threadsPerBlock);
 #ifdef PROFILE
     time = timer.tick();
     std::cout << "Cuda Setup: " << time << std::endl;
