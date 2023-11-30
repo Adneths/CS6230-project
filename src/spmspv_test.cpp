@@ -126,7 +126,8 @@ int main(int argc, char **argv) {
     LF_SpVector<double> *lfsp_vecdriven, *lfsp_rand;
     
     double sparsity = 0.15;
-    sp_rand = cuda::gen_rand_spvec(csc_matrix->cols, sparsity);
+    // sp_rand = cuda::gen_rand_spvec(csc_matrix->cols, sparsity);
+    sp_rand = SpVector(len, sparsity);
     printf("3.csc_matrix->cols: %d\n", csc_matrix->cols);
     lfsp_rand = new LF_SpVector<double>(*sp_rand);
     printf("4.csc_matrix->cols: %d\n", csc_matrix->cols);
