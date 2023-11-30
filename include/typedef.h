@@ -252,6 +252,10 @@ struct CSCMatrix
         : src(mat), rows(mat->m), cols(mat->n),
           nnz(mat->nnz), colPtr(mat->colptr), dataRow(mat->rowidx), dataVal((T *)mat->values)
     {
+        printf("In CSCMatrix Construction:\n");
+        printf("rows: %d\n", rows);
+        printf("cols: %d\n", cols);
+         
         if (mat->value_type == value_type_t::PATTERN)
         {
             dataVal = (T *)malloc(nnz * sizeof(T));
