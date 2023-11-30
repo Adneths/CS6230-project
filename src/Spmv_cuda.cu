@@ -17,7 +17,7 @@ namespace cuda
                             double *dense_vector,
                             double *dataValC)
     {
-        int tx = threadIdx.x;
+        // int tx = threadIdx.x;
         int bx = blockIdx.x;
         if (tx < colsB)
         {
