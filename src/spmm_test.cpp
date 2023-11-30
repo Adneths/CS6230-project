@@ -159,6 +159,6 @@ int main(int argc, char **argv)
 
     delete matrix;
     delete spmm_result_cuda;
-    delete spmm_result_cusparse;
+    // delete spmm_result_cusparse;
     return 0;
 }
