@@ -149,7 +149,7 @@ __global__ void spmspv_naive_vecdriven_dacc(int rowsA, int colsA, int* colPtrA, 
     __syncthreads(); // does this work?
 
     for (int i = 0; i < colsA; i++) {
-        vecC[indB_x] += dataC[i * colsA + indB_x];
+        vecC[indB_x] += dataC[indB_x * colsA + i];
     }
 
 }
