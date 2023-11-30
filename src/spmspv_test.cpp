@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
     //std::cout << result_cusparse << std::endl;
 
     std::cout << "input_csr_mat:\n" << matrix << std::endl;
-    std::cout << "input csc_mat:\n" << csc_matrix << std:endl;
+    std::cout << "input csc_mat:\n" << csc_matrix << std::endl;
     
 
     printf("Cuda Results: ");

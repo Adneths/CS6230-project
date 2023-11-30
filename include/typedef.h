@@ -338,7 +338,7 @@ std::ostream &operator<<(std::ostream &stream, CSRMatrix<T> *mat)
     if (mat->rowPtr == nullptr || mat->dataCol == nullptr || mat->dataVal == nullptr)
         return stream << "Invalid Matrix";
 
-    stream << mat->rows << "x" << mat->cols << ": " << mat->nnz << std::endl;
+    stream << "CSRMatrix:" << mat->rows << "x" << mat->cols << ": " << mat->nnz << std::endl;
 
     for (int r = 0; r < mat->rows; r++)
     {
@@ -366,7 +366,7 @@ std::ostream &operator<<(std::ostream &stream, CSCMatrix<T> *mat)
     if (mat->colPtr == nullptr || mat->dataRow == nullptr || mat->dataVal == nullptr)
         return stream << "Invalid Matrix";
 
-    stream << mat->rows << "x" << mat->cols << ": " << mat->nnz << std::endl;
+    stream << "CSCMatrix" << mat->rows << "x" << mat->cols << ": " << mat->nnz << std::endl;
 
     for (int r = 0; r < mat->cols; r++)
     {
@@ -382,10 +382,10 @@ std::ostream &operator<<(std::ostream &stream, CSCMatrix<T> *mat)
             else
                 stream << "0\t";
         }
-        if (r != mat->rows - 1)
-            stream << std::endl;
+        // if (r != mat->rows - 1)
+        stream << std::endl;
     }
-    
+    stream << "^T";
 
     return stream;
 }
