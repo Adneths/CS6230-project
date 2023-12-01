@@ -158,7 +158,7 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
 
 // }
 
-__global__ void spmspv_naive_vecdriven_dacc(int rowsA, int colsA, int* colPtrA, int* dataRowA, double* dataValA, int lenB, int nnzB, listformat_element<double>* elementsB, double* dataC, double* vecC) {
+__global__ void spmspv_naive_vecdriven_mul(int rowsA, int colsA, int* colPtrA, int* dataRowA, double* dataValA, int lenB, int nnzB, listformat_element<double>* elementsB, double* dataC) {
     int tx = threadIdx.x; int bx = blockIdx.x;
     int stride = blockDim.x;
     int idx = elementsB[bx].idx;
@@ -168,13 +168,13 @@ __global__ void spmspv_naive_vecdriven_dacc(int rowsA, int colsA, int* colPtrA, 
     for (int i = as + tx; i < ae; i += stride) {
         dataC[idx * colsA + dataRowA[i]] = dataValA[i] * valB;
     }
-    __syncthreads();
-
-    if (tx == 0)
-        for (int i = 0; i < colsA; i++) {
-            vecC[idx] += dataC[idx * colsA + i];
-        }
-
+    // __syncthreads();
+}
+__global__ void spmspv_naive_vecdriven_dacc(int lenB, double* dataC, double* vecC) {
+    int tx = threadIdx.x; int bx = blockIdx.x;
+    int idx = bx * blockDim.x + tx
+    for (int i = 0; i < lenB; i++)
+        vecC[idx] += dataC[i * lenB + idx]; 
 }
 
 LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<double>* B){
@@ -230,7 +230,16 @@ LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<do
     timer.tick();
 #endif
 
-    spmspv_naive_vecdriven_dacc<<<numBlocks, threadsPerBlock>>>(A->rows, A->cols, d_colPtrA, d_dataRowA, d_dataValA, B->len, B->nnz, d_elements_B, d_dataValC, d_dataVecC);
+    spmspv_naive_vecdriven_mul<<<numBlocks, threadsPerBlock>>>(A->rows, A->cols, d_colPtrA, d_dataRowA, d_dataValA, B->len, B->nnz, d_elements_B, d_dataValC);
+    dim3 threadsPerBlock(32 * ((B->len + 31) / 32));
+
+    // Calculate the number of blocks as an integer first
+    int numBlocksInt = (B->len + threadsPerBlock.x - 1) / threadsPerBlock.x;
+    
+    // Then use this integer to create a dim3 object
+    dim3 numBlocks(numBlocksInt);
+    cudaDeviceSynchronize()
+    spmspv_naive_vecdriven_dacc<<<numBlocks, threadsPerBlock>>>(B->len, d_dataValC, d_dataVec);
 
 #ifdef PROFILE
     time = timer.tick();
