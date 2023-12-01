@@ -138,23 +138,41 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
     return ret;
 }
 
+// __global__ void spmspv_naive_vecdriven_dacc(int rowsA, int colsA, int* colPtrA, int* dataRowA, double* dataValA, int lenB, int nnzB, listformat_element<double>* elementsB, double* dataC, double* vecC) {
+//     int tx = threadIdx.x; int bx = blockIdx.x;
+//     int indB_x = elementsB[bx * blockDim.x + threadIdx.x].idx;
+//     double valB = elementsB[bx * blockDim.x + threadIdx.x].data;
+//     if (bx * blockDim.x + threadIdx.x < lenB) {
+
+//         int as = colPtrA[indB_x]; int ae = colPtrA[indB_x+1];
+//         for (int i = as; i < ae; i++) {
+//             dataC[dataRowA[i]*colsA+indB_x] = dataValA[i] * valB;
+//         }
+//     }
+//     // synchronize()
+//     __syncthreads(); // need synchronize in wider range
+
+//     for (int i = 0; i < colsA; i++) {
+//         vecC[indB_x] += dataC[indB_x * colsA + i];
+//     }
+
+// }
+
 __global__ void spmspv_naive_vecdriven_dacc(int rowsA, int colsA, int* colPtrA, int* dataRowA, double* dataValA, int lenB, int nnzB, listformat_element<double>* elementsB, double* dataC, double* vecC) {
     int tx = threadIdx.x; int bx = blockIdx.x;
-    int indB_x = elementsB[bx * blockDim.x + threadIdx.x].idx;
-    double valB = elementsB[bx * blockDim.x + threadIdx.x].data;
-    if (bx * blockDim.x + threadIdx.x < lenB) {
+    int stride = blockDim.x;
+    double valB = elementsB[bx].data;
+    int as = colPtrA[bx];
+    int ae = colPtrA[bx+1]
+    for (int i = as; i < ae; i += stide) {
+        dataC[bx * colsA + dataRow[i]] = dataValA[i] * valB;
+    }
+    __syncthreads();
 
-        int as = colPtrA[indB_x]; int ae = colPtrA[indB_x+1];
-        for (int i = as; i < ae; i++) {
-            dataC[dataRowA[i]*colsA+indB_x] = dataValA[i] * valB;
+    if (tx == 0)
+        for (int i = 0; i < colsA; i++) {
+            vecC[bx] += dataC[bx * colsA + i];
         }
-    }
-    // synchronize()
-    __syncthreads(); // need synchronize in wider range
-
-    for (int i = 0; i < colsA; i++) {
-        vecC[indB_x] += dataC[indB_x * colsA + i];
-    }
 
 }
 
