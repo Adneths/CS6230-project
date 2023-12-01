@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
     }
     printf("In main:\n");
     printf("spm is symmetric: %d\n",((struct csc_matrix_t*)(spm->repr))->symmetry_type);
-    ((struct csc_matrix_t*)(spm->repr))->symmetry_type = 0; // UNSYMMETRIC
+    ((struct csc_matrix_t*)(spm->repr))->symmetry_type = UNSYMMETRIC; 
     printf("spm is symmetric: %d\n",((struct csc_matrix_t*)(spm->repr))->symmetry_type);
 
     CSCMatrix<double>* csc_matrix = new CSCMatrix<double>((struct csc_matrix_t*)csc_spm->repr);
