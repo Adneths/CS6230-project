@@ -231,15 +231,15 @@ LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<do
 #endif
 
     spmspv_naive_vecdriven_mul<<<numBlocks, threadsPerBlock>>>(A->rows, A->cols, d_colPtrA, d_dataRowA, d_dataValA, B->len, B->nnz, d_elements_B, d_dataValC);
-    threadsPerBlock(32 * ((B->len + 31) / 32));
+    dim3 threadsPerBlock_1(32 * ((B->len + 31) / 32));
 
     // Calculate the number of blocks as an integer first
-    int numBlocksInt = (B->len + threadsPerBlock.x - 1) / threadsPerBlock.x;
+    int numBlocksInt = (B->len + threadsPerBlock_1.x - 1) / threadsPerBlock.x;
     
     // Then use this integer to create a dim3 object
-    numBlocks(numBlocksInt);
+    dim3 numBlocks_1(numBlocksInt);
     cudaDeviceSynchronize();
-    spmspv_naive_vecdriven_dacc<<<numBlocks, threadsPerBlock>>>(B->len, d_dataValC, d_dataVecC);
+    spmspv_naive_vecdriven_dacc<<<numBlocks_1, threadsPerBlock_1>>>(B->len, d_dataValC, d_dataVecC);
 
 #ifdef PROFILE
     time = timer.tick();
