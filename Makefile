@@ -41,7 +41,10 @@ profile: $(SRC_SOURCES) $(INCLUDE_HEADERS) $(SRC_CUDA_SOURCES)
 
 spmspv: $(SPMSPV_SRC_SOURCES) $(INCLUDE_HEADERS) $(SRC_CUDA_SOURCES)
 	nvcc $(NVCCFLAGS) $(SPMSPV_SRC_SOURCES) $(SRC_CUDA_SOURCES) -o $@ $(LDFLAGS)
-	#./$@ data/GD97_b/GD97_b.rb
+
+spmspv_test: spmspv
+	./spmspv data/GD97_b/GD97_b.rb > results/GD97_b.txt
+	./test/test_spmspv.py
 
 spmspv_profile: $(SPMSPV_SRC_SOURCES) $(INCLUDE_HEADERS) $(SRC_CUDA_SOURCES)
 	nvcc $(NVCCFLAGS) $(SPMSPV_SRC_SOURCES) $(SRC_CUDA_SOURCES) -D PROFILE -o $@ $(LDFLAGS)
