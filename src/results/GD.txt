@@ -1,4 +1,6 @@
-data/GD97_b/GD97_b.rb: In CSCMatrix Construction:
+data/GD97_b/GD97_b.rb: In main:
+csc_spm is symmetric: 1
+In CSCMatrix Construction:
 rows: 47
 cols: 47
 47x47 (132)
