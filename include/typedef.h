@@ -340,6 +340,14 @@ std::ostream &operator<<(std::ostream &stream, CSRMatrix<T> *mat)
 
     stream << "CSRMatrix:" << mat->rows << "x" << mat->cols << ": " << mat->nnz << std::endl;
 
+    stream << "rowPtr: ";
+    for (int r = 0; r < mat->rows+1; r++)
+        stream << mat->rowPtr[r] << " ";
+    stream << std::endl << "dataCol: ";
+    for (int n = 0; n < mat->nnz; n ++)
+        stream << mat->dataCol[n] << " ";;
+    stream << std::endl;
+
     for (int r = 0; r < mat->rows; r++)
     {
         int s = mat->rowPtr[r];
@@ -367,6 +375,14 @@ std::ostream &operator<<(std::ostream &stream, CSCMatrix<T> *mat)
         return stream << "Invalid Matrix";
 
     stream << "CSCMatrix:  " << mat->rows << "x" << mat->cols << ": " << mat->nnz << std::endl;
+
+    stream << "colPtr: ";
+    for (int r = 0; r < mat->cols+1; r++)
+        stream << mat->colPtr[r] << " ";
+    stream << std::endl << "dataRow: ";
+    for (int n = 0; n < mat->nnz; n ++)
+        stream << mat->dataRow[n] << " ";;
+    stream << std::endl;
 
     for (int r = 0; r < mat->cols; r++)
     {
