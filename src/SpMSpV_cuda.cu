@@ -165,7 +165,7 @@ __global__ void spmspv_naive_vecdriven_dacc(int rowsA, int colsA, int* colPtrA, 
     double valB = elementsB[bx].data;
     int as = colPtrA[idx];
     int ae = colPtrA[idx+1];
-    for (int i = as; i < ae; i += stride) {
+    for (int i = as + tx; i < ae; i += stride) {
         dataC[idx * colsA + dataRowA[i]] = dataValA[i] * valB;
     }
     __syncthreads();
