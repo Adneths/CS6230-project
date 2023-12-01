@@ -111,6 +111,8 @@ int main(int argc, char **argv) {
         printf("NULL Loaded.\n");
         return 1;
     }
+    printf("In main:\n");
+    printf("csc_spm is symmetric: %d",((struct csc_matrix_t*)(csc_spm->repr))->symmetry_type);
     CSCMatrix<double>* csc_matrix = new CSCMatrix<double>((struct csc_matrix_t*)csc_spm->repr);
     // printf("In main:\n");
     // printf("1.csc_matrix->cols: %d\n", csc_matrix->cols);
