@@ -425,33 +425,28 @@ bool operator==(const CSCMatrix<T> &a, const CSCMatrix<T> &b)
     return true;
 }
 
-// template <typename T>
-// std::ostream &operator<<(std::ostream &stream, SpVector<T> *v)
-// {
-//     if (mat->colPtr == nullptr || mat->dataRow == nullptr || mat->dataVal == nullptr)
-//         return stream << "Invalid Matrix";
+template <typename T>
+std::ostream &operator<<(std::ostream &stream, SpVector<T> *v)
+{
+    if (v->data == nullptr || v->ind == nullptr)
+        return stream << "Invalid Matrix";
 
-//     stream << mat->rows << "x" << mat->cols << ": " << mat->nnz << std::endl;
-
-//     for (int r = 0; r < mat->cols; r++)
-//     {
-//         int s = mat->colPtr[r];
-//         int e = mat->colPtr[r + 1];
-//         for (int c = 0; c < mat->cols; c++)
-//         {
-//             if (s < e && c == mat->dataRow[s])
-//             {
-//                 stream << mat->dataVal[s] << "\t";
-//                 s++;
-//             }
-//             else
-//                 stream << "0\t";
-//         }
-//         if (r != mat->cols - 1)
-//             stream << std::endl;
-//     }
-//     return stream;
-// }
+    stream << "len: " << v->len << " , nnz: " << v->nnz << std::endl;
+    stream << "(ind, data): "
+    for (int i = 0; i < v->nnz; i++) {
+        stream << "(" << v->ind[i] << ", " << v->data[i] << "), "
+    }
+    stream << std::endl;
+    int idx = 0;
+    for (int i = 0; i < v->len; i++) {
+        if (idx < nnz && v->ind[idx] == i) {
+            stream << v->data[idx++] << "\t"; 
+        }
+        else
+            stream << "0\t";
+    }
+    return stream;
+}
 
 template <typename T>
 bool operator==(const SpVector<T> &a, const LF_SpVector<T> &b)
