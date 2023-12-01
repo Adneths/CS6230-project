@@ -434,7 +434,7 @@ std::ostream &operator<<(std::ostream &stream, SpVector<T> *v)
     stream << "len: " << v->len << " , nnz: " << v->nnz << std::endl;
     stream << "(ind, data): ";
     for (int i = 0; i < v->nnz; i++) {
-        stream << "(" << v->ind[i] << ", " << v->data[i] << "), "
+        stream << "(" << v->ind[i] << ", " << v->data[i] << "), ";
     }
     stream << std::endl;
     int idx = 0;
