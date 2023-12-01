@@ -172,7 +172,7 @@ __global__ void spmspv_naive_vecdriven_mul(int rowsA, int colsA, int* colPtrA, i
 }
 __global__ void spmspv_naive_vecdriven_dacc(int lenB, double* dataC, double* vecC) {
     int tx = threadIdx.x; int bx = blockIdx.x;
-    int idx = bx * blockDim.x + tx
+    int idx = bx * blockDim.x + tx;
     for (int i = 0; i < lenB; i++)
         vecC[idx] += dataC[i * lenB + idx]; 
 }
@@ -238,7 +238,7 @@ LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<do
     
     // Then use this integer to create a dim3 object
     dim3 numBlocks(numBlocksInt);
-    cudaDeviceSynchronize()
+    cudaDeviceSynchronize();
     spmspv_naive_vecdriven_dacc<<<numBlocks, threadsPerBlock>>>(B->len, d_dataValC, d_dataVec);
 
 #ifdef PROFILE
