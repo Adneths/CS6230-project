@@ -432,14 +432,14 @@ std::ostream &operator<<(std::ostream &stream, SpVector<T> *v)
         return stream << "Invalid Matrix";
 
     stream << "len: " << v->len << " , nnz: " << v->nnz << std::endl;
-    stream << "(ind, data): "
+    stream << "(ind, data): ";
     for (int i = 0; i < v->nnz; i++) {
         stream << "(" << v->ind[i] << ", " << v->data[i] << "), "
     }
     stream << std::endl;
     int idx = 0;
     for (int i = 0; i < v->len; i++) {
-        if (idx < nnz && v->ind[idx] == i) {
+        if (idx < v->nnz && v->ind[idx] == i) {
             stream << v->data[idx++] << "\t"; 
         }
         else
