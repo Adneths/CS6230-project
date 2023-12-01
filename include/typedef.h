@@ -457,13 +457,13 @@ std::ostream &operator<<(std::ostream &stream, LF_SpVector<T> *v)
     stream << "len: " << v->len << " , nnz: " << v->nnz << std::endl;
     stream << "(ind, data): ";
     for (int i = 0; i < v->nnz; i++) {
-        stream << "(" << v->elements->idx[i] << ", " << v->elements->data[i] << "), ";
+        stream << "(" << v->elements.idx[i] << ", " << v->elements.data[i] << "), ";
     }
     stream << std::endl;
     int idx = 0;
     for (int i = 0; i < v->len; i++) {
-        if (idx < v->nnz && v->elements->idx[idx] == i) {
-            stream << v->elements->data[idx++] << "\t"; 
+        if (idx < v->nnz && v->elements.idx[idx] == i) {
+            stream << v->elements.data[idx++] << "\t"; 
         }
         else
             stream << "0\t";
