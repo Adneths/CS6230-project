@@ -161,17 +161,18 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
 __global__ void spmspv_naive_vecdriven_dacc(int rowsA, int colsA, int* colPtrA, int* dataRowA, double* dataValA, int lenB, int nnzB, listformat_element<double>* elementsB, double* dataC, double* vecC) {
     int tx = threadIdx.x; int bx = blockIdx.x;
     int stride = blockDim.x;
+    int idx = elementsB[bx].idx;
     double valB = elementsB[bx].data;
-    int as = colPtrA[bx];
-    int ae = colPtrA[bx+1];
+    int as = colPtrA[idx];
+    int ae = colPtrA[idx+1];
     for (int i = as; i < ae; i += stride) {
-        dataC[bx * colsA + dataRowA[i]] = dataValA[i] * valB;
+        dataC[idx * colsA + dataRowA[i]] = dataValA[i] * valB;
     }
     __syncthreads();
 
     if (tx == 0)
         for (int i = 0; i < colsA; i++) {
-            vecC[bx] += dataC[bx * colsA + i];
+            vecC[idx] += dataC[idx * colsA + i];
         }
 
 }
@@ -218,10 +219,10 @@ LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<do
     dim3 threadsPerBlock(32 * ((A->rows + 31) / 32));
 
     // Calculate the number of blocks as an integer first
-    int numBlocksInt = (A->rows + threadsPerBlock.x - 1) / threadsPerBlock.x;
+    // int numBlocksInt = (B->nnz + threadsPerBlock.x - 1) / threadsPerBlock.x;
     
     // Then use this integer to create a dim3 object
-    dim3 numBlocks(numBlocksInt);
+    dim3 numBlocks(B->nnz);
     
 #ifdef PROFILE
     time = timer.tick();
