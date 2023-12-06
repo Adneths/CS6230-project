@@ -295,7 +295,8 @@ struct dense_mat
     int col_num;
     int total_size;
     T *matrix;
-    dense_mat(int row_num, int col_num) : row_num(row_num), col_num(col_num), total_size(row_num * col_num), matrix(new T[total_size])
+    dense_mat(int row_num, int col_num) : row_num(row_num), col_num(col_num),
+                                          total_size(row_num * col_num), matrix(new T[total_size])
     {
         std::random_device rd;
         std::mt19937 gen(rd());
