@@ -181,6 +181,8 @@ CSRMatrix<double>* spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     cudaFree(d_rowPtrB );
     cudaFree(d_dataColB);
     cudaFree(d_dataValB);
+    cudaFree(d_rowPtrC );
+    cudaFree(d_dataColC);
     cudaFree(d_dataValC);
 #ifdef PROFILE
     nvtxRangePop();
