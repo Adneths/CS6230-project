@@ -99,13 +99,11 @@ std::ostream& operator<<(std::ostream& stream, TileSpMatrix<T>* mat) {
         stream << ", " << mat->tileNnzs[i];
     stream << " }" << std::endl;
 
-    std::cout << mat->rowPtr.size() << std::endl;
-    std::cout << mat->rowPtr[0] << std::endl;
     stream << "Tiles = {" << std::endl;
     for (int i = 0; i < mat->tileNnzs.size()-1; i++) {
-        stream << "{" << std::endl << "rowPtr = { " << mat->rowPtr[16*i];
+        stream << "{" << std::endl << "rowPtr = { " << int(mat->rowPtr[16*i]);
         for (int j = 1; j < 16; j++)
-            stream << ", " << mat->rowPtr[16*i+j];
+            stream << ", " << int(mat->rowPtr[16*i+j]);
         stream << " }" << std::endl;
 
         stream << "rowIdx = { " << (mat->rowcolIdx[mat->tileNnzs[i]] >> 4);
