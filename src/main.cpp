@@ -14,7 +14,6 @@ extern "C" {
 #include <bebop/smc/csr_matrix.h>
 }
 
-
 static bool compare(CSRMatrix<double>* a, CSRMatrix<double>* b, double epsilon = 0.00001) {
     if (a==nullptr || a->rowPtr==nullptr || a->dataCol==nullptr || a->dataVal==nullptr) {
         printf("Matrix A is invalid\n");
@@ -100,6 +99,7 @@ int main(int argc, char **argv) {
         printf("Usage: ./<program> <harwell-boeing-file>");
         return 1;
     }
+
     const char *const filename = argv[1];
     enum sparse_matrix_file_format_t file_format = sparse_matrix_file_format_t::HARWELL_BOEING;
 	struct sparse_matrix_t* spm = load_sparse_matrix(file_format, filename);
@@ -108,15 +108,10 @@ int main(int argc, char **argv) {
     printf("%s: ", argv[1]);
     struct csr_matrix_t* csr_mat = csc_to_csr((struct csc_matrix_t*)spm->repr);
     CSRMatrix<double>* matrix = new CSRMatrix<double>(csr_mat);
-    //double data[16] = {0,0,0,0, 0,0,0,1, 0,0,0,0, 0,1,0,1};
-    //CSRMatrix<double>* matrix = new CSRMatrix<double>(4, 4, data);
     matrix->info();
     CSRMatrix<double> *result_cuda, *result_cusparse;
     result_cuda = cuda::spgemm(matrix, matrix);
     result_cusparse = cusparse::spgemm(matrix, matrix);
-    //std::cout << matrix << std::endl;
-    //std::cout << result_cuda << std::endl;
-    //std::cout << result_cusparse << std::endl;
 
     printf("Cuda Results: ");
     if (result_cuda) result_cuda->info(); else printf("nullptr\n");

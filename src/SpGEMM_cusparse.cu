@@ -11,6 +11,7 @@
 
 #ifdef PROFILE
 #include "timer.h"
+#include <nvtx3/nvToolsExtCuda.h>
 #endif
 
 #define CHECK_CUDA(func)                                                       \
@@ -37,8 +38,9 @@ namespace cusparse {
 
 CSRMatrix<double>* spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
 #ifdef PROFILE
-    Timer timer;
-    auto time = timer.tick();
+    nvtxNameOsThread(pthread_self(), "MAIN_THREAD");
+    nvtxRangePushA("CuSparse_spgemm");
+    nvtxRangePushA("CuSparse_spgemm_setup");
 #endif
     double              alpha       = 1.0f;
     double              beta        = 0.0f;
@@ -91,16 +93,15 @@ CSRMatrix<double>* spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
                                       NULL, NULL, NULL,
                                       CUSPARSE_INDEX_32I, CUSPARSE_INDEX_32I,
                                       CUSPARSE_INDEX_BASE_ZERO, CUDA_R_64F) )
-    //--------------------------------------------------------------------------
-#ifdef PROFILE
-    time = timer.tick();
-    std::cout << "CuSparse Setup: " << time << std::endl;
-    timer.tick();
-#endif
-    // SpGEMM Computation
     cusparseSpGEMMDescr_t spgemmDesc;
     CHECK_CUSPARSE( cusparseSpGEMM_createDescr(&spgemmDesc) )
+    //--------------------------------------------------------------------------
 
+#ifdef PROFILE
+    nvtxRangePop();
+    nvtxRangePushA("CuSparse_spgemm_compute");
+#endif
+    // SpGEMM Computation
     // ask bufferSize1 bytes for external memory
     CHECK_CUSPARSE(
         cusparseSpGEMM_workEstimation(handle, opA, opB,
@@ -130,9 +131,8 @@ CSRMatrix<double>* spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
                                            computeType, CUSPARSE_SPGEMM_DEFAULT,
                                            spgemmDesc, &bufferSize2, dBuffer2) )
 #ifdef PROFILE
-    time = timer.tick();
-    std::cout << "CuSparse Compute: " << time << std::endl;
-    timer.tick();
+    nvtxRangePop();
+    nvtxRangePushA("CuSparse_spgemm_deardown");
 #endif
     // get matrix C non-zero entries C_nnz
     int64_t C_num_rows1, C_num_cols1, C_nnz;
@@ -183,8 +183,8 @@ CSRMatrix<double>* spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     cudaFree(d_dataValB);
     cudaFree(d_dataValC);
 #ifdef PROFILE
-    time = timer.tick();
-    std::cout << "CuSparse Teardown: " << time << std::endl;
+    nvtxRangePop();
+    nvtxRangePop();
 #endif
     
     return ret;

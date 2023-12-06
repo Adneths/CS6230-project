@@ -9,7 +9,7 @@ INCLUDE_PATHS += -I$(BEBOP_SPARSE_INCLUDE)
 
 CUDA_TOOLKIT := $(shell dirname $$(command -v nvcc))/..
 INCLUDE_PATHS += -I$(CUDA_TOOLKIT)/include
-LIB_PATHS += -L$(CUDA_MATH_LIB) -lcusparse
+LIB_PATHS += -L$(CUDA_MATH_LIB) -lcusparse -lnvToolsExt
 
 LDFLAGS += $(LIB_PATHS)
 CXXFLAGS += $(INCLUDE_PATHS)

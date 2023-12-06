@@ -43,12 +43,14 @@ struct SpVector {
     }
 };
 
+typedef enum {ROW_MAJOR, COL_MAJOR} Order;
 template<typename T>
 struct Matrix {
     int rows, cols;
     T* data;
-    Matrix() : rows(0), cols(0), data(nullptr) {}
-    Matrix(int rows, int cols, T* data) : rows(rows), cols(cols), data(data) {}
+    Order order;
+    Matrix() : rows(0), cols(0), data(nullptr), order(ROW_MAJOR) {}
+    Matrix(int rows, int cols, T* data, Order order=ROW_MAJOR) : rows(rows), cols(cols), data(data), order(order) {}
     void info() {
         printf("%dx%d\n", rows, cols);
     }

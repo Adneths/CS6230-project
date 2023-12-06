@@ -7,8 +7,12 @@
 #SBATCH -c 32
 #SBATCH --gpus-per-task=1
 
-export SLURM_CPU_BIND="cores"
-srun ./profile data/GD97_b/GD97_b.rb                            > results/GD97_b.txt
-srun ./profile data/Hamrle1/Hamrle1.rb                          > results/Hamrle1.txt
-srun ./profile data/micromass_10NN/micromass_10NN.rb            > results/micromass_10NN.txt
-srun ./profile data/umistfacesnorm_10NN/umistfacesnorm_10NN.rb  > results/umistfacesnorm_10NN.txt
+#export SLURM_CPU_BIND="cores"
+profile() {
+    srun nsys profile -s none --trace=cuda,nvtx,osrt,cusparse --force-overwrite true -o results/$1.nsys-rep ./profile data/$1/$1.rb > results/$1.txt
+}
+
+profile GD97_b
+profile Hamrle1
+profile micromass_10NN
+profile umistfacesnorm_10NN

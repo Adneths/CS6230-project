@@ -7,7 +7,7 @@
 #include "SpGEMM_cuda.h"
 
 #ifdef PROFILE
-#include "timer.h"
+#include <nvtx3/nvToolsExtCuda.h>
 #endif
 
 namespace cuda {
@@ -23,7 +23,7 @@ __global__ void spgemm_dacc(int rowsA, int colsA, int* rowPtrA, int* dataColA, d
             double valA = dataValA[i]; int c = dataColA[i];
 
             int bs = rowPtrB[c]; int be = rowPtrB[c+1];
-            if (bs + tx < be) {
+            if (bs + tx < be) { // Prevent over reading of B
                 dataValC[bx * colsB + dataColB[bs + tx]] += valA * dataValB[bs + tx];
             }
         }
@@ -32,8 +32,9 @@ __global__ void spgemm_dacc(int rowsA, int colsA, int* rowPtrA, int* dataColA, d
 
 CSRMatrix<double>* spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
 #ifdef PROFILE
-    Timer timer;
-    auto time = timer.tick();
+    nvtxNameOsThread(pthread_self(), "MAIN_THREAD");
+    nvtxRangePushA("CUDA_spgemm");
+    nvtxRangePushA("CUDA_spgemm_setup");
 #endif
     if (A->rows > 1024 || B->cols > 1024) {
         printf("Error: Does not support resultant matrices of size greater than 1024x1024\n");
@@ -71,18 +72,16 @@ CSRMatrix<double>* spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     dim3 threadsPerBlock(32*((B->cols+31)/32));
     dim3 numBlocks(A->rows);
 #ifdef PROFILE
-    time = timer.tick();
-    std::cout << "Cuda Setup: " << time << std::endl;
-    timer.tick();
+    nvtxRangePop();
+    nvtxRangePushA("CUDA_spgemm_compute");
 #endif
 
     spgemm_dacc<<<numBlocks,threadsPerBlock>>>(A->rows, A->cols, d_rowPtrA, d_dataColA, d_dataValA,
                                                B->rows, B->cols, d_rowPtrB, d_dataColB, d_dataValB,
                                                d_dataValC);
 #ifdef PROFILE
-    time = timer.tick();
-    std::cout << "Cuda Compute: " << time << std::endl;
-    timer.tick();
+    nvtxRangePop();
+    nvtxRangePushA("CUDA_spgemm_deardown");
 #endif
 
     h_dataValC = (double*) malloc(dataValC_size);
@@ -97,8 +96,8 @@ CSRMatrix<double>* spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     cudaFree(d_dataValB);
     cudaFree(d_dataValC);
 #ifdef PROFILE
-    time = timer.tick();
-    std::cout << "Cuda Teardown: " << time << std::endl;
+    nvtxRangePop();
+    nvtxRangePop();
 #endif
 
     return ret;
