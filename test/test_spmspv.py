@@ -77,5 +77,5 @@ for i in [8, 9, 11, 12, 20, 27, 29, 36, 39, 41, 45, 46]:
     print(i)
     cs = colp[i]
     ce = colp[i+1]
-    dataRow = dataRow[cs:ce]
-    print(dataRow)
+    data = dataRow[cs:ce]
+    print(data)
