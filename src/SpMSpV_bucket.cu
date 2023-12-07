@@ -136,7 +136,7 @@ LF_SpVector<double>* spmspv_bucket(CSCMatrix<double>* A, LF_SpVector<double>* B)
 
     spmspv_bucket_prepare<<<numBlocks, threadsPerBlock>>>(A->rows, A->cols, d_colPtrA, d_dataRowA, d_dataValA, B->len, B->nnz, d_elements_B, d_Boffset, nbucket);
     cudaDeviceSynchronize();
-    spmspv_bucket_insert<<<numBlocks_1, threadsPerBlock_1>>>(A->rows, A->cols, d_colPtrA, d_dataRowA, d_dataValA, B->len, B->nnz, d_elements_B, d_Boffset, nbucket, d_bucket, d_SPA);
+    spmspv_bucket_insert<<<numBlocks, threadsPerBlock>>>(A->rows, A->cols, d_colPtrA, d_dataRowA, d_dataValA, B->len, B->nnz, d_elements_B, d_Boffset, nbucket, d_bucket, d_SPA);
     h_SPA = (double*)malloc(spa_size);
     cudaDeviceSynchronize();
 
