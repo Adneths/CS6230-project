@@ -150,9 +150,20 @@ int main(int argc, char **argv) {
     // else
     //     printf("Cuda Result does not match CuSparse Result\n");
 
-    LF_SpVector<double>* lf_bucket = cuda::spmspv_bucket(csc_matrix, lfsp_rand);
+    LF_SpVector<double>* lf_bucket;
+    // lf_bucket = cuda::spmspv_bucket(csc_matrix, lfsp_rand);
     printf("matdriven output equals bucket output: %d\n",static_cast<int>(*sp_matdriven == *lf_bucket));
 
+    int* h_Boffset = cuda::spmspv_bucket(csc_matrix, lfsp_rand);
+    std::cout << "Boffset:\n" << std::endl;
+
+    for (int i = 0; i < 64; i++) {
+        std::cout << i << ": [";
+        for (int j = 0; j < 64*4; j++) {
+            std::cout << *(h_Boffset+ i*64*4+j) << ", ";
+        }
+        std::cout << "]" << std::endl;
+    }
 
     delete matrix;
     delete csc_matrix;
