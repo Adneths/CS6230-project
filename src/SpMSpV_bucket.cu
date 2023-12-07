@@ -69,7 +69,7 @@ __global__ void spmspv_bucket_insert(int rowsA, int colsA, int* colPtrA, int* da
     __syncthreads();
     for (int i = tx; i < nbucket; i+= stride) {
         int bs;
-        if (tx > 0)
+        if (i > 0)
             bs = d_Boffset[stride * nbucket + i-1];
         else
             bs = 0;
