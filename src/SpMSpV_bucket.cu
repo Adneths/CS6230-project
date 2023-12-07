@@ -81,8 +81,8 @@ __global__ void spmspv_bucket_insert(int rowsA, int colsA, int* colPtrA, int* da
     }
 }
 
-// LF_SpVector<double>* spmspv_bucket(CSCMatrix<double>* A, LF_SpVector<double>* B) {
-int* spmspv_bucket(CSCMatrix<double>* A, LF_SpVector<double>* B) {
+LF_SpVector<double>* spmspv_bucket(CSCMatrix<double>* A, LF_SpVector<double>* B) {
+// int* spmspv_bucket(CSCMatrix<double>* A, LF_SpVector<double>* B) {
     if (A->cols != B->len) {
         printf("In spmspv_naive_vecdriven:\n");
         printf("A addr:%d\n", A);
