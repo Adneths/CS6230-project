@@ -34,7 +34,7 @@ __global__ void spmspv_bucket_prepare(int rowsA, int colsA, int* colPtrA, int* d
             d_Boffset[j * nbucket + i] += d_Boffset[(j-1) * nbucket + i];
     }
 
-    __syncthreads();
+    // __syncthreads();
     // if (tx == 0) {
     //     d_Boffset[stride * nbucket] = d_Boffset[(stride-1) * nbucket];
     //     for (int i = 1; i < nbucket; i++)
