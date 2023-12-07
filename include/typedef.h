@@ -481,11 +481,9 @@ bool operator==(const SpVector<T> &a, const LF_SpVector<T> &b)
         return false;
     if (a.len != b.len || a.nnz != b.nnz)
         return false;
-    printf("point1\n");
-    for (int i = 0; i < a.len; i++)
+    for (int i = 0; i < a.nnz; i++)
         if (a.ind[i] != b.elements[i].idx)
             return false;
-    printf("point2\n");
     for (int i = 0; i < a.nnz; i++)
         if (a.data[i] != b.elements[i].data)
             return false;
