@@ -106,7 +106,7 @@ LF_SpVector<double>* spmspv_bucket(CSCMatrix<double>* A, LF_SpVector<double>* B)
     colPtrA_size  = (A->cols+1) * sizeof(int),
     dataRowA_size = (A->nnz) * sizeof(int),
     dataValA_size = (A->nnz) * sizeof(double),
-    elementsB_size = (B->nnz) * sizeof(listformat_element<double>),
+    elementsB_size = (B->nnz) * sizeof(listformat_element<double>);
 
     cudaMalloc(&d_colPtrA , colPtrA_size );
     cudaMalloc(&d_dataRowA, dataRowA_size);
