@@ -6,6 +6,7 @@
 
 #include "typedef.h"
 #include "SpMSpV_cuda.h"
+#include "SpMSpV_bucket.h"
 // #include "SpMSpV_cusparse.h"
 
 extern "C" {
@@ -73,26 +74,6 @@ static bool compare(CSRMatrix<double>* a, CSRMatrix<double>* b, double epsilon =
     }
     
     return match;
-}
-
-std::ostream& operator<<(std::ostream& stream, struct csr_matrix_t* mat) {
-    stream << mat->m << "x" << mat->n << ": " << mat->nnz << std::endl;
-
-    const double* const values = (const double* const) (mat->values);
-    for (int r = 0; r < mat->m; r++) {
-        int s = mat->rowptr[r];
-        int e = mat->rowptr[r+1];
-        for (int c = 0; c < mat->n; c++) {
-            if (s < e && c == mat->colidx[s]) {
-                stream << values[s] << "\t";
-                s++;
-            }
-            else
-                stream << "0\t";
-        }
-        if (r != mat->m-1) stream << std::endl;
-    }
-    return stream;
 }
 
 int main(int argc, char **argv) {
@@ -168,6 +149,9 @@ int main(int argc, char **argv) {
     //     printf("Cuda Result matches CuSparse Result\n");
     // else
     //     printf("Cuda Result does not match CuSparse Result\n");
+
+    LF_SpVector lf_bucket = cuda::spmspv_bucket(csc_matrix, lfsp_rand);
+    printf("matdriven output equals vecdriven output: %d\n",static_cast<int>(*sp_matdriven == *lf_bucket));
 
 
     delete matrix;
