@@ -156,7 +156,7 @@ LF_SpVector<double>* spmspv_bucket(CSCMatrix<double>* A, LF_SpVector<double>* B)
 #endif
     // Bucket debugging
     struct listformat_element<double>* h_bucket;
-    h_bucket = (strcut listformat_element<double>*)malloc(bucket_size);
+    h_bucket = (struct listformat_element<double>*)malloc(bucket_size);
     cudaMemcpy(h_bucket, d_bucket, bucket_size, cudaMemcpyDeviceToHost);
     std::cout << "h_bucket:\n";
     for (int i = 0; i < A->nnz; i++) {

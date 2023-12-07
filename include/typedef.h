@@ -491,9 +491,9 @@ bool operator==(const SpVector<T> &a, const LF_SpVector<T> &b)
 }
 
 template <typename T>
-std::ostream &operator<<(std::ostream &stream, listformat_element<T> *v)
+std::ostream &operator<<(std::ostream &stream, listformat_element<T> v)
 {
-    stream << "(" << v->idx << ", " << v->data << ")";
+    stream << "(" << v.idx << ", " << v.data << ")";
     return stream;
 }
 
