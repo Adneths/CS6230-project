@@ -167,7 +167,7 @@ int main(int argc, char **argv) {
                 std::cout << ", ";
         }
         std::cout << "]";
-        if (i != 63)
+        if (i != 64)
         std::cout << ",";
     }
     std::cout << "]" << std::endl;

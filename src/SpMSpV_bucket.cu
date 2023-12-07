@@ -34,11 +34,11 @@ __global__ void spmspv_bucket_prepare(int rowsA, int colsA, int* colPtrA, int* d
             d_Boffset[j * nbucket + i] += d_Boffset[(j-1) * nbucket + i];
     }
 
-    // __syncthreads();
-    // if (tx == 0) {
-    //     for (int i = 1; i < nbucket; i++)
-    //         d_Boffset[stride * nbucket + i] += d_Boffset[stride * nbucket + i-1];
-    // }
+    __syncthreads();
+    if (tx == 0) {
+        for (int i = 1; i < nbucket; i++)
+            d_Boffset[stride * nbucket + i] += d_Boffset[stride * nbucket + i-1];
+    }
     
 }
 __global__ void spmspv_bucket_insert(int rowsA, int colsA, int* colPtrA, int* dataRowA, double* dataValA, int lenB, int nnzB, listformat_element<double>* elementsB, int* d_Boffset, int nbucket, struct listformat_element<double> *d_bucket, double* d_SPA) {
