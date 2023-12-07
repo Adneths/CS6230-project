@@ -16,7 +16,8 @@ namespace cuda {
 __global__ void spgemm_dacc(int rowsA, int colsA, int* rowPtrA, int* dataColA, double* dataValA,
                         int rowsB, int colsB, int* rowPtrB, int* dataColB, double* dataValB,
                         double* dataValC) {
-    int tx = threadIdx.x; int bx = blockIdx.x;
+    int tx = threadIdx.x;
+    int bx = blockIdx.x;
     if (tx < colsB) {
         int as = rowPtrA[bx]; int ae = rowPtrA[bx+1];
         for (int i = as; i < ae; i++) {
@@ -26,6 +27,7 @@ __global__ void spgemm_dacc(int rowsA, int colsA, int* rowPtrA, int* dataColA, d
             if (bs + tx < be) { // Prevent over reading of B
                 dataValC[bx * colsB + dataColB[bs + tx]] += valA * dataValB[bs + tx];
             }
+            __syncthreads();
         }
     }
 }
