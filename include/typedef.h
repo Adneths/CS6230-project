@@ -490,4 +490,12 @@ bool operator==(const SpVector<T> &a, const LF_SpVector<T> &b)
     return true;
 }
 
+template <typename T>
+std::ostream &operator<<(std::ostream &stream, listformat_element<T> *v)
+{
+    stream << "(" << v->idx << ", " << v->data << ")";
+    return stream;
+}
+
 #endif
+

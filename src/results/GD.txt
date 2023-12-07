@@ -75,3 +75,7 @@ len: 47 , nnz: 12
 Cuda Results: 
 matdriven output equals vecdriven output: 1
 matdriven output equals bucket output: 0
+output_bucket
+len: 47 , nnz: 0
+(ind, data): 
+0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	
