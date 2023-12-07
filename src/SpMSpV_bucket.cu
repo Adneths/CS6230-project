@@ -60,7 +60,7 @@ __global__ void spmspv_bucket_insert(int rowsA, int colsA, int* colPtrA, int* da
             if (tx > 0)
                 idx += d_Boffset[(tx - 1) * nbucket + k];
             idx += inserted_cnt[k];
-            d_bucket[idx].idx = j;
+            d_bucket[idx].idx = dataRowA[j];
             d_bucket[idx].data = val;
             inserted_cnt[k]++;
         }
