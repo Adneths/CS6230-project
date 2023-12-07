@@ -150,7 +150,7 @@ int main(int argc, char **argv) {
     // else
     //     printf("Cuda Result does not match CuSparse Result\n");
 
-    LF_SpVector lf_bucket = cuda::spmspv_bucket(csc_matrix, lfsp_rand);
+    LF_SpVector<double>* lf_bucket = cuda::spmspv_bucket(csc_matrix, lfsp_rand);
     printf("matdriven output equals vecdriven output: %d\n",static_cast<int>(*sp_matdriven == *lf_bucket));
 
 
