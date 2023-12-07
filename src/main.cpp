@@ -97,7 +97,7 @@ std::ostream& operator<<(std::ostream& stream, struct csr_matrix_t* mat) {
 }
 
 int main(int argc, char **argv) {
-/*
+///*
     if (argc < 2) {
         printf("Usage: ./<program> <harwell-boeing-file>");
         return 1;
@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
     printf("%s: ", argv[1]);
     struct csr_matrix_t* csr_mat = csc_to_csr((struct csc_matrix_t*)spm->repr);
     CSRMatrix<double>* matrix = new CSRMatrix<double>(csr_mat);
-*/
+//*/
     /*
     std::vector<int> rowPtr(65),
     dataCol = {40, 16, 39};
@@ -120,6 +120,7 @@ int main(int argc, char **argv) {
     std::fill(rowPtr.begin()+4, rowPtr.begin()+12, 1);
     std::fill(rowPtr.begin()+12, rowPtr.begin()+54, 2);
     std::fill(rowPtr.begin()+54, rowPtr.begin()+65, 3);*/
+    /*
     std::vector<int> rowPtr(65),
     dataCol = {40, 16, 39};
     std::vector<double> dataVal = {111,222,333};
@@ -129,7 +130,7 @@ int main(int argc, char **argv) {
     rowPtr[6] = 3;
     std::fill(rowPtr.begin()+7, rowPtr.begin()+65, 3);
     CSRMatrix<double>* matrix = new CSRMatrix<double>(64, 64, rowPtr.data(), dataCol.data(), dataVal.data(), 3);
-    matrix->info();
+    matrix->info();*/
     CSRMatrix<double> *result_cuda, *result_cusparse;
     result_cuda = cuda::tile_spgemm(matrix, matrix);
     return 0;

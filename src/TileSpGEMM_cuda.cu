@@ -1,14 +1,19 @@
 
+#include <stdint.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
 #include "device_launch_parameters.h"
+#include <cusparse.h>
 
 #include "TileSpGEMM_cuda.h"
 
 #ifdef PROFILE
 #include <nvtx3/nvToolsExtCuda.h>
 #endif
+
+void _spgemm_symbolic(int rowsA, int colsA, int nnzA, int rowsB, int colsB, int nnzB,
+    int *d_rowPtrA, int *d_colIdxA, int *d_rowPtrB, int *d_colIdxB, int **d_rowPtrC, int **d_colIdxC);
 
 // Could optimize by searching in larger blocks
 __global__ void formRowIdx(int rows, int nnz, int* rowPtr, int* rowIdx) {
@@ -38,43 +43,43 @@ CSRMatrix<double>* tile_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     uint8_t drowPtrB, drowcolIdxB;
     double *dvalsB;
     uint16_t *dmasksB;
-    cudaMalloc(&dtileRowPtrA, tileA->tileRowPtr.size() * sizeof(int)   );
-    cudaMalloc(&dtileColIdxA, tileA->tileColIdx.size() * sizeof(int)   );
-    cudaMalloc(  &dtileNnzsA, tileA->tileNnzs.size() * sizeof(int)     );
-    cudaMalloc(    &drowPtrA, tileA->rowPtr.size() * sizeof(uint8_t)   );
-    cudaMalloc( &drowcolIdxA, tileA->rowcolIdx.size() * sizeof(uint8_t));
-    cudaMalloc(      &dvalsA, tileA->vals.size() * sizeof(double)      );
-    cudaMalloc(     &dmasksA, tileA->masks.size() * sizeof(uint16_t)   );
-    cudaMalloc(&dtileRowPtrB, tileB->tileRowPtr.size() * sizeof(int)   );
-    cudaMalloc(&dtileColIdxB, tileB->tileColIdx.size() * sizeof(int)   );
-    cudaMalloc(  &dtileNnzsB, tileB->tileNnzs.size() * sizeof(int)     );
-    cudaMalloc(    &drowPtrB, tileB->rowPtr.size() * sizeof(uint8_t)   );
-    cudaMalloc( &drowcolIdxB, tileB->rowcolIdx.size() * sizeof(uint8_t));
-    cudaMalloc(      &dvalsB, tileB->vals.size() * sizeof(double)      );
-    cudaMalloc(     &dmasksB, tileB->masks.size() * sizeof(uint16_t)   );
+    cudaMalloc((void**)&dtileRowPtrA, tileA->tileRowPtr.size() * sizeof(int)   );
+    cudaMalloc((void**)&dtileColIdxA, tileA->tileColIdx.size() * sizeof(int)   );
+    cudaMalloc((void**)  &dtileNnzsA, tileA->tileNnzs.size() * sizeof(int)     );
+    cudaMalloc((void**)    &drowPtrA, tileA->rowPtr.size() * sizeof(uint8_t)   );
+    cudaMalloc((void**) &drowcolIdxA, tileA->rowcolIdx.size() * sizeof(uint8_t));
+    cudaMalloc((void**)      &dvalsA, tileA->vals.size() * sizeof(double)      );
+    cudaMalloc((void**)     &dmasksA, tileA->masks.size() * sizeof(uint16_t)   );
+    cudaMalloc((void**)&dtileRowPtrB, tileB->tileRowPtr.size() * sizeof(int)   );
+    cudaMalloc((void**)&dtileColIdxB, tileB->tileColIdx.size() * sizeof(int)   );
+    cudaMalloc((void**)  &dtileNnzsB, tileB->tileNnzs.size() * sizeof(int)     );
+    cudaMalloc((void**)    &drowPtrB, tileB->rowPtr.size() * sizeof(uint8_t)   );
+    cudaMalloc((void**) &drowcolIdxB, tileB->rowcolIdx.size() * sizeof(uint8_t));
+    cudaMalloc((void**)      &dvalsB, tileB->vals.size() * sizeof(double)      );
+    cudaMalloc((void**)     &dmasksB, tileB->masks.size() * sizeof(uint16_t)   );
 
-    cudaMemcpy(&dtileRowPtrA, tileA->tileRowPtr, tileA->tileRowPtr.size() * sizeof(int)   , cudaMemcpyHostToDevice);
-    cudaMemcpy(&dtileColIdxA, tileA->tileColIdx, tileA->tileColIdx.size() * sizeof(int)   , cudaMemcpyHostToDevice);
-    cudaMemcpy(  &dtileNnzsA, tileA->tileNnzs  , tileA->tileNnzs.size() * sizeof(int)     , cudaMemcpyHostToDevice);
-    cudaMemcpy(    &drowPtrA, tileA->rowPtr    , tileA->rowPtr.size() * sizeof(uint8_t)   , cudaMemcpyHostToDevice);
-    cudaMemcpy( &drowcolIdxA, tileA->rowcolIdx , tileA->rowcolIdx.size() * sizeof(uint8_t), cudaMemcpyHostToDevice);
-    cudaMemcpy(      &dvalsA, tileA->vals      , tileA->vals.size() * sizeof(double)      , cudaMemcpyHostToDevice);
-    cudaMemcpy(     &dmasksA, tileA->masks     , tileA->masks.size() * sizeof(uint16_t)   , cudaMemcpyHostToDevice);
-    cudaMemcpy(&dtileRowPtrB, tileB->tileRowPtr, tileB->tileRowPtr.size() * sizeof(int)   , cudaMemcpyHostToDevice);
-    cudaMemcpy(&dtileColIdxB, tileB->tileColIdx, tileB->tileColIdx.size() * sizeof(int)   , cudaMemcpyHostToDevice);
-    cudaMemcpy(  &dtileNnzsB, tileB->tileNnzs  , tileB->tileNnzs.size() * sizeof(int)     , cudaMemcpyHostToDevice);
-    cudaMemcpy(    &drowPtrB, tileB->rowPtr    , tileB->rowPtr.size() * sizeof(uint8_t)   , cudaMemcpyHostToDevice);
-    cudaMemcpy( &drowcolIdxB, tileB->rowcolIdx , tileB->rowcolIdx.size() * sizeof(uint8_t), cudaMemcpyHostToDevice);
-    cudaMemcpy(      &dvalsB, tileB->vals      , tileB->vals.size() * sizeof(double)      , cudaMemcpyHostToDevice);
-    cudaMemcpy(     &dmasksB, tileB->masks     , tileB->masks.size() * sizeof(uint16_t)   , cudaMemcpyHostToDevice);
+    cudaMemcpy(&dtileRowPtrA, tileA->tileRowPtr.data(), tileA->tileRowPtr.size() * sizeof(int)   , cudaMemcpyHostToDevice);
+    cudaMemcpy(&dtileColIdxA, tileA->tileColIdx.data(), tileA->tileColIdx.size() * sizeof(int)   , cudaMemcpyHostToDevice);
+    cudaMemcpy(  &dtileNnzsA, tileA->tileNnzs  .data(), tileA->tileNnzs.size() * sizeof(int)     , cudaMemcpyHostToDevice);
+    cudaMemcpy(    &drowPtrA, tileA->rowPtr    .data(), tileA->rowPtr.size() * sizeof(uint8_t)   , cudaMemcpyHostToDevice);
+    cudaMemcpy( &drowcolIdxA, tileA->rowcolIdx .data(), tileA->rowcolIdx.size() * sizeof(uint8_t), cudaMemcpyHostToDevice);
+    cudaMemcpy(      &dvalsA, tileA->vals      .data(), tileA->vals.size() * sizeof(double)      , cudaMemcpyHostToDevice);
+    cudaMemcpy(     &dmasksA, tileA->masks     .data(), tileA->masks.size() * sizeof(uint16_t)   , cudaMemcpyHostToDevice);
+    cudaMemcpy(&dtileRowPtrB, tileB->tileRowPtr.data(), tileB->tileRowPtr.size() * sizeof(int)   , cudaMemcpyHostToDevice);
+    cudaMemcpy(&dtileColIdxB, tileB->tileColIdx.data(), tileB->tileColIdx.size() * sizeof(int)   , cudaMemcpyHostToDevice);
+    cudaMemcpy(  &dtileNnzsB, tileB->tileNnzs  .data(), tileB->tileNnzs.size() * sizeof(int)     , cudaMemcpyHostToDevice);
+    cudaMemcpy(    &drowPtrB, tileB->rowPtr    .data(), tileB->rowPtr.size() * sizeof(uint8_t)   , cudaMemcpyHostToDevice);
+    cudaMemcpy( &drowcolIdxB, tileB->rowcolIdx .data(), tileB->rowcolIdx.size() * sizeof(uint8_t), cudaMemcpyHostToDevice);
+    cudaMemcpy(      &dvalsB, tileB->vals      .data(), tileB->vals.size() * sizeof(double)      , cudaMemcpyHostToDevice);
+    cudaMemcpy(     &dmasksB, tileB->masks     .data(), tileB->masks.size() * sizeof(uint16_t)   , cudaMemcpyHostToDevice);
 
-    double *dtileRowPtrC, *dtileColIdxC;
-    cusparse::_spgemm_symbolic(tileA->tileRows, tileA->tileCols, tileA->tileNnz,
+    int *dtileRowPtrC, *dtileColIdxC;
+    _spgemm_symbolic(tileA->tileRows, tileA->tileCols, tileA->tileNnz,
                      tileB->tileRows, tileB->tileCols, tileB->tileNnz,
                      dtileRowPtrA, dtileColIdxA, dtileRowPtrB, dtileColIdxB,
                      &dtileRowPtrC, &dtileColIdxC);
     
-
+    
 
     return nullptr;
 }
@@ -87,7 +92,7 @@ CSRMatrix<double>* tile_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     if (status != cudaSuccess) {                                               \
         printf("CUDA API failed at line %d with error: %s (%d)\n",             \
                __LINE__, cudaGetErrorString(status), status);                  \
-        return nullptr;                                                        \
+        return;                                                                \
     }                                                                          \
 }
 
@@ -97,7 +102,7 @@ CSRMatrix<double>* tile_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     if (status != CUSPARSE_STATUS_SUCCESS) {                                   \
         printf("CUSPARSE API failed at line %d with error: %s (%d)\n",         \
                __LINE__, cusparseGetErrorString(status), status);              \
-        return nullptr;                                                        \
+        return;                                                                \
     }                                                                          \
 }
 
@@ -106,7 +111,7 @@ __global__ void _fill(float* arr0, int len0, float* arr1, int len1, float val) {
     int id = bx*1024+tx;
     if (id < len0)
         arr0[id] = val;
-    if (id < le1)
+    if (id < len1)
         arr1[id] = val;
 }
 
@@ -127,10 +132,10 @@ void _spgemm_symbolic(int rowsA, int colsA, int nnzA, int rowsB, int colsB, int 
     float *d_dataValA, *d_dataValB, *d_dataValC;
     size_t
     rowPtrA_size  = (rowsA+1) * sizeof(int),
-    dataColA_size = (nnzA) * sizeof(int),
+    //dataColA_size = (nnzA) * sizeof(int),
     dataValA_size = (nnzA) * sizeof(float),
-    rowPtrB_size  = (rowsB+1) * sizeof(int),
-    dataColB_size = (nnzB) * sizeof(int),
+    //rowPtrB_size  = (rowsB+1) * sizeof(int),
+    //dataColB_size = (nnzB) * sizeof(int),
     dataValB_size = (nnzB) * sizeof(float);
     
     cudaMalloc(d_rowPtrC  , rowPtrA_size );
@@ -147,11 +152,11 @@ void _spgemm_symbolic(int rowsA, int colsA, int nnzA, int rowsB, int colsB, int 
     size_t bufferSize1 = 0,    bufferSize2 = 0;
     CHECK_CUSPARSE( cusparseCreate(&handle) )
     CHECK_CUSPARSE( cusparseCreateCsr(&matA, rowsA, colsA, nnzA,
-                                      d_rowPtrA, d_dataColA, d_dataValA,
+                                      d_rowPtrA, d_colIdxA, d_dataValA,
                                       CUSPARSE_INDEX_32I, CUSPARSE_INDEX_32I,
                                       CUSPARSE_INDEX_BASE_ZERO, CUDA_R_32F) )
     CHECK_CUSPARSE( cusparseCreateCsr(&matB, rowsB, colsB, nnzB,
-                                      d_rowPtrB, d_dataColB, d_dataValB,
+                                      d_rowPtrB, d_colIdxB, d_dataValB,
                                       CUSPARSE_INDEX_32I, CUSPARSE_INDEX_32I,
                                       CUSPARSE_INDEX_BASE_ZERO, CUDA_R_32F) )
     CHECK_CUSPARSE( cusparseCreateCsr(&matC, rowsA, colsB, 0,
@@ -209,7 +214,7 @@ void _spgemm_symbolic(int rowsA, int colsA, int nnzA, int rowsB, int colsB, int 
     // NOTE: if 'beta' != 0, the values of C must be update after the allocation
     //       of dC_values, and before the call of cusparseSpGEMM_copy
     // update matC with the new pointers
-    CHECK_CUSPARSE( cusparseCsrSetPointers(matC, *d_rowPtrC, d_dataColC, d_dataValC) )
+    CHECK_CUSPARSE( cusparseCsrSetPointers(matC, *d_rowPtrC, d_colIdxC, d_dataValC) )
 
     // if beta != 0, cusparseSpGEMM_copy reuses/updates the values of dC_values
     // copy the final products to the matrix C
