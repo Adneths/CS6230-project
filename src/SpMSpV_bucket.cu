@@ -170,8 +170,8 @@ LF_SpVector<double>* spmspv_bucket(CSCMatrix<double>* A, LF_SpVector<double>* B)
     std::cout << "Cuda Teardown: " << time << std::endl;
 #endif
 
-    // return ret;
-    return h_Boffset;
+    return ret;
+    // return h_Boffset;
 }
 
 }
