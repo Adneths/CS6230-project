@@ -60,7 +60,7 @@ __global__ void spmspv_bucket_insert(int rowsA, int colsA, int* colPtrA, int* da
             if (tx > 0)
                 idx += d_Boffset[(tx - 1) * nbucket + k];
             idx += inserted_cnt[k];
-            d_bucket[idx].idx = c;
+            d_bucket[idx].idx = j;
             d_bucket[idx].data = val;
             inserted_cnt[k]++;
         }
@@ -159,7 +159,7 @@ LF_SpVector<double>* spmspv_bucket(CSCMatrix<double>* A, LF_SpVector<double>* B)
             std::cout << ",";
         }
         std::cout << "]" << std::endl;
-        
+
     spmspv_bucket_insert<<<numBlocks, threadsPerBlock>>>(A->rows, A->cols, d_colPtrA, d_dataRowA, d_dataValA, B->len, B->nnz, d_elements_B, d_Boffset, nbucket, d_bucket, d_SPA);
     h_SPA = (double*)malloc(spa_size);
     cudaDeviceSynchronize();
