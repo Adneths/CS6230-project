@@ -21,7 +21,7 @@ __global__ void spmspv_bucket_prepare(int rowsA, int colsA, int* colPtrA, int* d
     int stride = blockDim.x;
     for (int i = tx; i < nnzB; i += stride) {
         int c = elementsB[i].idx;
-        int as = colPtrA[c]; int ae = colPtr[c+1];
+        int as = colPtrA[c]; int ae = colPtrA[c+1];
         for (int j = as; j < ae; j++) {
             int b = dataRowA[j] * nbucket / rowsA;
             d_Boffset[tx * nbucket + b] += 1;
@@ -44,11 +44,12 @@ __global__ void spmspv_bucket_prepare(int rowsA, int colsA, int* colPtrA, int* d
 __global__ void spmspv_bucket_insert(int rowsA, int colsA, int* colPtrA, int* dataRowA, double* dataValA, int lenB, int nnzB, listformat_element<double>* elementsB, int* d_Boffset, int nbucket, struct listformat_element<double> *d_bucket, double* d_SPA) {
     int tx = threadIdx.x;
     int stride = blockDim.x;
-    int inserted_cnt[nbucket] = {0};
+    int inserted_cnt[64*4] = {0};
+    // int inserted_cnt[nbucket] = {0};
 
     for (int i = tx; i < nnzB; i += stride) {
         int c = elementsB[i].idx;
-        int as = colPtrA[c]; int ae = colPtr[c+1];
+        int as = colPtrA[c]; int ae = colPtrA[c+1];
         for (int j = as; j < ae; j++) {
             int k = dataRowA[j] * nbucket / rowsA;
             double val = elementsB[i].data * dataValA[j];
@@ -70,7 +71,7 @@ __global__ void spmspv_bucket_insert(int rowsA, int colsA, int* colPtrA, int* da
             bs = d_Boffset[stride * nbucket + i-1];
         else
             bs = 0;
-        be = d_Boffset[stride * nbucket + i];
+        int be = d_Boffset[stride * nbucket + i];
         for (int j = bs; j < be; j++) {
             int ind = d_bucket[j].idx;
             d_SPA[ind] += d_bucket[j].data;
@@ -101,7 +102,7 @@ LF_SpVector<double>* spmspv_bucket(CSCMatrix<double>* A, LF_SpVector<double>* B)
     size_t
     Boffset_zize = ((nthread+1) * nbucket) * sizeof(int),
     bucket_size = (A->nnz) * sizeof(struct listformat_element<double>),
-    spa_size = (A->rows) * sizeof(double);
+    spa_size = (A->rows) * sizeof(double),
     colPtrA_size  = (A->cols+1) * sizeof(int),
     dataRowA_size = (A->nnz) * sizeof(int),
     dataValA_size = (A->nnz) * sizeof(double),
@@ -146,7 +147,7 @@ LF_SpVector<double>* spmspv_bucket(CSCMatrix<double>* A, LF_SpVector<double>* B)
 #endif
 
     cudaMemcpy(h_SPA, d_SPA, spa_size, cudaMemcpyDeviceToHost);
-    LF_SpVector<double>* ret = new LF_SpVector<double>(h_SPA);
+    LF_SpVector<double>* ret = new LF_SpVector<double>(A->rows, h_SPA);
     
     cudaFree(d_colPtrA );
     cudaFree(d_dataRowA);
