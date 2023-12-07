@@ -186,7 +186,7 @@ LF_SpVector<double>* spmspv_bucket(CSCMatrix<double>* A, LF_SpVector<double>* B)
     for(int i = 0; i < A->rows; i++) {
         std::cout << h_SPA[i] <<", ";
     }
-    std::cout << Std::endl;
+    std::cout << std::endl;
 
 
 
