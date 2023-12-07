@@ -169,6 +169,9 @@ LF_SpVector<double>* spmspv_bucket(CSCMatrix<double>* A, LF_SpVector<double>* B)
     std::cout << "Cuda Compute: " << time << std::endl;
     timer.tick();
 #endif
+
+    cudaMemcpy(h_SPA, d_SPA, spa_size, cudaMemcpyDeviceToHost);
+
     // Bucket debugging
     struct listformat_element<double>* h_bucket;
     h_bucket = (struct listformat_element<double>*)malloc(bucket_size);
@@ -179,9 +182,14 @@ LF_SpVector<double>* spmspv_bucket(CSCMatrix<double>* A, LF_SpVector<double>* B)
     }
     std::cout << std::endl;
 
+    std::cout <<"h_SPA:\n";
+    for(int i = 0; i < A->rows; i++) {
+        std::cout << h_SPA[i] <<", ";
+    }
+    std::cout << Std::endl;
 
 
-    cudaMemcpy(h_SPA, d_SPA, spa_size, cudaMemcpyDeviceToHost);
+
     LF_SpVector<double>* ret = new LF_SpVector<double>(A->rows, h_SPA);
     
     cudaFree(d_colPtrA );
