@@ -57,22 +57,23 @@ __global__ void spmspv_bucket_insert(int rowsA, int colsA, int* colPtrA, int* da
             int idx = 0;
             if (k > 0)
                 idx += d_Boffset[stride * nbucket + k-1];
-            if (i > 0)
-                idx += d_Boffset[(i - 1) * nbucket + k];
+            if (tx > 0)
+                idx += d_Boffset[(tx - 1) * nbucket + k];
             idx += inserted_cnt[k];
             d_bucket[idx].idx = c;
             d_bucket[idx].data = val;
+            inserted_cnt[k]++;
         }
     }
 
     __syncthreads();
     for (int i = tx; i < nbucket; i+= stride) {
         int bs;
-        if (i > 0)
-            bs = d_Boffset[stride * nbucket + i-1];
+        if (tx > 0)
+            bs = d_Boffset[stride * nbucket + tx-1];
         else
             bs = 0;
-        int be = d_Boffset[stride * nbucket + i];
+        int be = d_Boffset[stride * nbucket + tx];
         for (int j = bs; j < be; j++) {
             int ind = d_bucket[j].idx;
             d_SPA[ind] += d_bucket[j].data;
