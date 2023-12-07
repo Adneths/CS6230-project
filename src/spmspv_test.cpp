@@ -140,7 +140,7 @@ int main(int argc, char **argv) {
     std::cout << "output_naive_vecdriven\n" << lfsp_vecdriven << std::endl;
     std::cout << "input_lfspvec:\n" << lfsp_rand << std::endl; 
 
-    printf("Cuda Results: ");
+    printf("Cuda Results: \n");
     printf("matdriven output equals vecdriven output: %d\n",static_cast<int>(*sp_matdriven == *lfsp_vecdriven));
     // if (result_cuda) result_cuda->info(); else printf("nullptr\n");
     // printf("CuSparse Results: ");
@@ -151,7 +151,7 @@ int main(int argc, char **argv) {
     //     printf("Cuda Result does not match CuSparse Result\n");
 
     LF_SpVector<double>* lf_bucket = cuda::spmspv_bucket(csc_matrix, lfsp_rand);
-    printf("matdriven output equals vecdriven output: %d\n",static_cast<int>(*sp_matdriven == *lf_bucket));
+    printf("matdriven output equals bucket output: %d\n",static_cast<int>(*sp_matdriven == *lf_bucket));
 
 
     delete matrix;
