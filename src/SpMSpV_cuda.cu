@@ -35,7 +35,7 @@ SpVector<double>* gen_rand_spvec(int len, double sparsity, int* ind, double* dat
     int nnz = 0;
     for (int i = 0; i < len; i++)
         // if (dis(gen) < sparsity) {
-        if (I == 8|| i ==9|| i ==11|| i ==12|| i ==20|| i ==27|| i ==29|| i ==36|| i ==39|| i ==41|| i ==45|| i ==46) {
+        if (i == 8|| i ==9|| i ==11|| i ==12|| i ==20|| i ==27|| i ==29|| i ==36|| i ==39|| i ==41|| i ==45|| i ==46) {
             ind[nnz] = i;
             data[nnz++] = 1.0;
         }
