@@ -81,7 +81,7 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
     dataValA_size = (A->nnz) * sizeof(double),
     indB_size = (B->nnz) * sizeof(int),
     dataValB_size = (B->nnz) * sizeof(double),
-    dataValC_size = (B->len) * sizeof(double);
+    dataValC_size = (A->rows) * sizeof(double);
 
     cudaMalloc(&d_rowPtrA , rowPtrA_size );
     cudaMalloc(&d_dataColA, dataColA_size);
@@ -191,7 +191,7 @@ LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<do
     auto time = timer.tick();
 #endif
     int *d_colPtrA, *d_dataRowA;
-    double *d_dataValA, *d_dataValC, *d_dataVecC, *h_dataValC, *h_dataVecC;
+    double *d_dataValA, *d_dataValC, *d_dataVecC, *h_dataVecC;
     listformat_element<double>* d_elements_B;
 
     size_t
@@ -200,7 +200,7 @@ LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<do
     dataValA_size = (A->nnz) * sizeof(double),
     elementsB_size = (B->nnz) * sizeof(listformat_element<double>),
     dataValC_size = (A->rows * B->len) * sizeof(double),
-    dataVecC_size = (B->len) * sizeof(double);
+    dataVecC_size = (A->rows) * sizeof(double);
 
     cudaMalloc(&d_colPtrA , colPtrA_size );
     cudaMalloc(&d_dataRowA, dataRowA_size);
@@ -250,20 +250,13 @@ LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<do
     h_dataVecC = (double*) malloc(dataVecC_size);
     cudaMemcpy(h_dataVecC, d_dataVecC, dataVecC_size, cudaMemcpyDeviceToHost);
     LF_SpVector<double>* ret = new LF_SpVector<double>(B->len, h_dataVecC);
-
-    // h_dataValC = (double*) malloc(dataValC_size);
-    // cudaMemcpy(h_dataValC, d_dataValC, dataValC_size, cudaMemcpyDeviceToHost);
-    // std::cout << "d_dataValC\n";
-    // for (int i = 0; i < rowsA; i++) {
-    //     for (int j = 0; j < colsA; i++)
-
-    // }
     
     cudaFree(d_colPtrA );
     cudaFree(d_dataRowA);
     cudaFree(d_dataValA);
     cudaFree(d_elements_B);
     cudaFree(d_dataValC);
+    cudaFree(d_dataVecC);
 #ifdef PROFILE
     time = timer.tick();
     std::cout << "Cuda Teardown: " << time << std::endl;
