@@ -70,10 +70,10 @@ __global__ void spmspv_bucket_insert(int rowsA, int colsA, int* colPtrA, int* da
     for (int i = tx; i < nbucket; i+= stride) {
         int bs;
         if (tx > 0)
-            bs = d_Boffset[stride * nbucket + tx-1];
+            bs = d_Boffset[stride * nbucket + i-1];
         else
             bs = 0;
-        int be = d_Boffset[stride * nbucket + tx];
+        int be = d_Boffset[stride * nbucket + i];
         for (int j = bs; j < be; j++) {
             int ind = d_bucket[j].idx;
             d_SPA[ind] += d_bucket[j].data;
