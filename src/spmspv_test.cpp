@@ -156,7 +156,7 @@ int main(int argc, char **argv) {
     std::cout << "output_bucket\n" << lf_bucket << std::endl;
 
     // int* h_Boffset = cuda::spmspv_bucket(csc_matrix, lfsp_rand);
-    // std::cout << "CSCMatrix:\n" << csc_matrix << "\n";
+    std::cout << "CSCMatrix:\n" << csc_matrix << "\n";
 
     // std::cout << "Boffset:\n[";
     // for (int i = 0; i < 65; i++) {
