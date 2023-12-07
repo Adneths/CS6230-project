@@ -22,8 +22,8 @@ INCLUDE_PATHS += -I$(INCLUDE_PATH)
 SOURCES = main.cpp
 SPMSPVSRC = spmspv_test.cpp
 SPMMSRC = spmm_test.cpp
-HEADERS = typedef.h timer.h SpGEMM_cuda.h SpGEMM_cusparse.h SpMSpV_cuda.h Spmm_cuda.h SpMSpV_bucekt.h
-CUDA_SOURCES = SpGEMM_cuda.cu SpGEMM_cusparse.cu SpMSpV_cuda.cu Spmm_cuda.cu SpMSpV_bucekt.cu
+HEADERS = typedef.h timer.h SpGEMM_cuda.h SpGEMM_cusparse.h SpMSpV_cuda.h Spmm_cuda.h SpMSpV_bucket.h
+CUDA_SOURCES = SpGEMM_cuda.cu SpGEMM_cusparse.cu SpMSpV_cuda.cu Spmm_cuda.cu SpMSpV_bucket.cu
 
 INCLUDE_HEADERS = ./$(INCLUDE_PATH)/$(shell echo $(HEADERS) | sed 's/ / \.\/$(INCLUDE_PATH)\//g')
 SRC_SOURCES= ./$(SRC_PATH)/$(shell echo $(SOURCES) | sed 's/ / \.\/$(SRC_PATH)\//g')
