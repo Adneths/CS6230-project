@@ -28,11 +28,11 @@ __global__ void spmspv_bucket_prepare(int rowsA, int colsA, int* colPtrA, int* d
         }
     }
 
-    // __syncthreads();
-    // for (int i = tx; i < nbucket; i += stride) {
-    //     for (int j = 1; j < stride; j++) 
-    //         d_Boffset[j * nbucket + i] += d_Boffset[(j-1) * nbucket + i];
-    // }
+    __syncthreads();
+    for (int i = tx; i < nbucket; i += stride) {
+        for (int j = 1; j < stride; j++) 
+            d_Boffset[j * nbucket + i] += d_Boffset[(j-1) * nbucket + i];
+    }
 
     // __syncthreads();
     // if (tx == 0) {
