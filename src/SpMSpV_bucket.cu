@@ -133,6 +133,7 @@ LF_SpVector<double>* spmspv_bucket(CSCMatrix<double>* A, LF_SpVector<double>* B)
     
 #ifdef PROFILE
     time = timer.tick();
+    std::cout << "SPMSPV_BUCKET\n";
     std::cout << "Cuda Setup: " << time << std::endl;
     timer.tick();
 #endif

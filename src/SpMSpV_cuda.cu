@@ -109,6 +109,7 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
     
 #ifdef PROFILE
     time = timer.tick();
+    std::cout << "SPMSPV_Naive_Matrix_Driven\n";
     std::cout << "Cuda Setup: " << time << std::endl;
     timer.tick();
 #endif
@@ -228,6 +229,7 @@ LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<do
     
 #ifdef PROFILE
     time = timer.tick();
+    std::cout << "SPMSPV_naive_vector_driven\n";
     std::cout << "Cuda Setup: " << time << std::endl;
     timer.tick();
 #endif
