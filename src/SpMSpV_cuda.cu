@@ -114,6 +114,7 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
 #endif
 
     spmspv_naive_matdriven_dacc<<<numBlocks, threadsPerBlock>>>(A->rows, A->cols, d_rowPtrA, d_dataColA, d_dataValA, B->len, B->nnz, d_indB, d_dataValB, d_dataValC);
+    cudaDeviceSynchronize();
 
 #ifdef PROFILE
     time = timer.tick();
@@ -241,6 +242,7 @@ LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<do
     dim3 numBlocks_1(numBlocksInt);
     cudaDeviceSynchronize();
     spmspv_naive_vecdriven_dacc<<<numBlocks_1, threadsPerBlock_1>>>(B->len, d_dataValC, d_dataVecC);
+    cudaDeviceSynchronize();
 
 #ifdef PROFILE
     time = timer.tick();
