@@ -141,24 +141,24 @@ LF_SpVector<double>* spmspv_bucket(CSCMatrix<double>* A, LF_SpVector<double>* B)
     cudaDeviceSynchronize();
 
     // Boffset debugging
-    int* h_Boffset;
-    h_Boffset = (int*)malloc(Boffset_zize);
-    cudaMemcpy(h_Boffset, d_Boffset, Boffset_zize, cudaMemcpyDeviceToHost);
+    // int* h_Boffset;
+    // h_Boffset = (int*)malloc(Boffset_zize);
+    // cudaMemcpy(h_Boffset, d_Boffset, Boffset_zize, cudaMemcpyDeviceToHost);
 
-        std::cout << "Boffset:\n[";
-        for (int i = 64; i < 65; i++) {
-            // std::cout << i << ": ";
-            std::cout << "[";
-            for (int j = 0; j < 64*4; j++) {
-                std::cout << *(h_Boffset+ i*64*4+j);
-                if (j != 64*4-1)
-                    std::cout << ", ";
-            }
-            std::cout << "]";
-            if (i != 64)
-            std::cout << ",";
-        }
-        std::cout << "]" << std::endl;
+        // std::cout << "Boffset:\n[";
+        // for (int i = 64; i < 65; i++) {
+        //     // std::cout << i << ": ";
+        //     std::cout << "[";
+        //     for (int j = 0; j < 64*4; j++) {
+        //         std::cout << *(h_Boffset+ i*64*4+j);
+        //         if (j != 64*4-1)
+        //             std::cout << ", ";
+        //     }
+        //     std::cout << "]";
+        //     if (i != 64)
+        //     std::cout << ",";
+        // }
+        // std::cout << "]" << std::endl;
 
     spmspv_bucket_insert<<<numBlocks, threadsPerBlock>>>(A->rows, A->cols, d_colPtrA, d_dataRowA, d_dataValA, B->len, B->nnz, d_elements_B, d_Boffset, nbucket, d_bucket, d_SPA);
     h_SPA = (double*)malloc(spa_size);
@@ -173,20 +173,20 @@ LF_SpVector<double>* spmspv_bucket(CSCMatrix<double>* A, LF_SpVector<double>* B)
     cudaMemcpy(h_SPA, d_SPA, spa_size, cudaMemcpyDeviceToHost);
 
     // Bucket debugging
-    struct listformat_element<double>* h_bucket;
-    h_bucket = (struct listformat_element<double>*)malloc(bucket_size);
-    cudaMemcpy(h_bucket, d_bucket, bucket_size, cudaMemcpyDeviceToHost);
-    std::cout << "h_bucket:\n";
-    for (int i = 0; i < A->nnz; i++) {
-        std::cout << h_bucket[i] << ",";
-    }
-    std::cout << std::endl;
+    // struct listformat_element<double>* h_bucket;
+    // h_bucket = (struct listformat_element<double>*)malloc(bucket_size);
+    // cudaMemcpy(h_bucket, d_bucket, bucket_size, cudaMemcpyDeviceToHost);
+    // std::cout << "h_bucket:\n";
+    // for (int i = 0; i < A->nnz; i++) {
+    //     std::cout << h_bucket[i] << ",";
+    // }
+    // std::cout << std::endl;
 
-    std::cout <<"h_SPA:\n";
-    for(int i = 0; i < A->rows; i++) {
-        std::cout << h_SPA[i] <<", ";
-    }
-    std::cout << std::endl;
+    // std::cout <<"h_SPA:\n";
+    // for(int i = 0; i < A->rows; i++) {
+    //     std::cout << h_SPA[i] <<", ";
+    // }
+    // std::cout << std::endl;
 
 
 

@@ -133,12 +133,12 @@ int main(int argc, char **argv) {
     //std::cout << result_cuda << std::endl;
     //std::cout << result_cusparse << std::endl;
 
-    std::cout << "input_csr_mat:\n" << matrix << std::endl;
+    // std::cout << "input_csr_mat:\n" << matrix << std::endl;
     // std::cout << "input csc_mat:\n" << csc_matrix << std::endl;
-    std::cout << "input_spvec:\n" << sp_rand << std::endl;
-    std::cout << "output_naive_matdriven\n" << sp_matdriven << std::endl;
-    std::cout << "output_naive_vecdriven\n" << lfsp_vecdriven << std::endl;
-    std::cout << "input_lfspvec:\n" << lfsp_rand << std::endl; 
+    // std::cout << "input_spvec:\n" << sp_rand << std::endl;
+    // std::cout << "output_naive_matdriven\n" << sp_matdriven << std::endl;
+    // std::cout << "output_naive_vecdriven\n" << lfsp_vecdriven << std::endl;
+    // std::cout << "input_lfspvec:\n" << lfsp_rand << std::endl; 
 
     printf("Cuda Results: \n");
     printf("matdriven output equals vecdriven output: %d\n",static_cast<int>(*sp_matdriven == *lfsp_vecdriven));
@@ -153,10 +153,10 @@ int main(int argc, char **argv) {
     LF_SpVector<double>* lf_bucket;
     lf_bucket = cuda::spmspv_bucket(csc_matrix, lfsp_rand);
     printf("matdriven output equals bucket output: %d\n",static_cast<int>(*sp_matdriven == *lf_bucket));
-    std::cout << "output_bucket\n" << lf_bucket << std::endl;
+    // std::cout << "output_bucket\n" << lf_bucket << std::endl;
 
     // int* h_Boffset = cuda::spmspv_bucket(csc_matrix, lfsp_rand);
-    std::cout << "CSCMatrix:\n" << csc_matrix << "\n";
+    // std::cout << "CSCMatrix:\n" << csc_matrix << "\n";
 
     // std::cout << "Boffset:\n[";
     // for (int i = 0; i < 65; i++) {
