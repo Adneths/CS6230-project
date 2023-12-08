@@ -84,18 +84,22 @@ int main(int argc, char **argv) {
     const char *const filename = argv[1];
     enum sparse_matrix_file_format_t file_format = sparse_matrix_file_format_t::HARWELL_BOEING;
 	struct sparse_matrix_t* spm = load_sparse_matrix(file_format, filename);
-    if (spm == NULL)
+    if (spm == NULL) {
+        printf("matrix loading error.");
         return 1;
+    }
+    printf("matrix loaded successfully.");
+
     printf("%s: ", argv[1]);
 	struct sparse_matrix_t* csc_spm = load_sparse_matrix(file_format, filename);
     if (csc_spm == NULL) {
         printf("NULL Loaded.\n");
         return 1;
     }
-    printf("In main:\n");
-    printf("spm is symmetric: %d\n",((struct csc_matrix_t*)(spm->repr))->symmetry_type);
+    // printf("In main:\n");
+    // printf("spm is symmetric: %d\n",((struct csc_matrix_t*)(spm->repr))->symmetry_type);
     ((struct csc_matrix_t*)(spm->repr))->symmetry_type = UNSYMMETRIC; 
-    printf("spm is symmetric: %d\n",((struct csc_matrix_t*)(spm->repr))->symmetry_type);
+    // printf("spm is symmetric: %d\n",((struct csc_matrix_t*)(spm->repr))->symmetry_type);
 
     CSCMatrix<double>* csc_matrix = new CSCMatrix<double>((struct csc_matrix_t*)csc_spm->repr);
     // printf("In main:\n");
