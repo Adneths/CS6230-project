@@ -1,4 +1,4 @@
 data/*
 results/*
-sparse
-profile
+spgemm
+spgemm_p

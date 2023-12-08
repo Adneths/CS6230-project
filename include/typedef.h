@@ -1,6 +1,7 @@
 #ifndef TYPEDEF_H
 #define TYPEDEF_H
 
+#include <cstring>
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -98,7 +99,6 @@ struct CSRMatrix {
             dataVal = (T*)malloc(nnz * sizeof(T));
             std::fill(dataVal, dataVal+nnz, 1);
         }
-        std::fill(dataVal, dataVal+nnz, 1); // Testing
     }
     ~CSRMatrix() {
         if (this->src != nullptr) {
@@ -114,6 +114,38 @@ struct CSRMatrix {
             if(rowPtr != nullptr)
                 free(rowPtr);
         }
+    }
+    void transpose() {
+        int* numRows = (int*)malloc((cols+1) * sizeof(int));
+        std::memset(numRows, 0, sizeof(int) * (cols+1));
+        for (int i = 0; i < nnz; i++)
+            numRows[dataCol[i]+1]++;
+        for (int i = 2; i < cols; i++)
+            numRows[i] += numRows[i-1];
+        int* nDataCol = (int*)malloc(nnz * sizeof(int));
+        double* nDataVal = (double*)malloc(nnz * sizeof(double));
+        for (int i = 0; i < rows; i++)
+            for (int j = rowPtr[i]; j < rowPtr[i+1]; j++) {
+                nDataCol[numRows[dataCol[j]]] = i;
+                nDataVal[numRows[dataCol[j]]] = dataVal[j];
+                numRows[dataCol[j]]++;
+            }
+        for (int i = rows; i > 0; i--)
+            numRows[i] = numRows[i-1];
+        numRows[0] = 0;
+        if (src != nullptr) {
+            if (src->value_type == value_type_t::PATTERN)
+                free(dataVal);
+            destroy_csr_matrix(src);
+        }
+        else {
+            free(this->rowPtr);
+            free(this->dataCol);
+            free(this->dataVal);
+        }
+        this->rowPtr = numRows;
+        this->dataCol = nDataCol;
+        this->dataVal = nDataVal;
     }
     void info() {
         printf("%dx%d (%d)\n", rows, cols, nnz);

@@ -8,7 +8,7 @@
 template<typename T>
 struct TileSpMatrix {
     int rows, cols, tileRows, tileCols, tileNnz;
-    std::vector<int> tileRowPtr, tileRowIdx, tileColIdx, tileNnzs;
+    std::vector<int> tileRowPtr, /*tileRowIdx,*/ tileColIdx, tileNnzs;
     std::vector<uint8_t> rowPtr, rowcolIdx;
     std::vector<double> vals;
     std::vector<uint16_t> masks;
@@ -59,7 +59,7 @@ struct TileSpMatrix {
                 }
                 for (int i = 0; i < 16; i++)
                     masks.push_back(mask[i]);
-                tileRowIdx.push_back(br/16);
+                //tileRowIdx.push_back(br/16);
                 tileColIdx.push_back(bc/16);
                 tileNnzs.push_back(nnzCount);
 
@@ -91,10 +91,10 @@ std::ostream& operator<<(std::ostream& stream, TileSpMatrix<T>* mat) {
     for(int i = 1; i < mat->tileRowPtr.size(); i++)
         stream << ", " << mat->tileRowPtr[i];
     stream << " }" << std::endl;
-    stream << "tileColIdx = { " << mat->tileRowIdx[0];
+    /*stream << "tileRowIdx = { " << mat->tileRowIdx[0];
     for(int i = 1; i < mat->tileRowIdx.size(); i++)
         stream << ", " << mat->tileRowIdx[i];
-    stream << " }" << std::endl;
+    stream << " }" << std::endl;*/
     stream << "tileColIdx = { " << mat->tileColIdx[0];
     for(int i = 1; i < mat->tileColIdx.size(); i++)
         stream << ", " << mat->tileColIdx[i];
