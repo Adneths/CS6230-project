@@ -385,24 +385,24 @@ std::ostream &operator<<(std::ostream &stream, CSCMatrix<T> *mat)
         stream << mat->dataRow[n] << " ";;
     stream << std::endl;
 
-    for (int r = 0; r < mat->cols; r++)
-    {
-        int s = mat->colPtr[r];
-        int e = mat->colPtr[r + 1];
-        for (int c = 0; c < mat->rows; c++)
-        {
-            if (s < e && c == mat->dataRow[s])
-            {
-                stream << mat->dataVal[s] << "\t";
-                s++;
-            }
-            else
-                stream << "0\t";
-        }
-        // if (r != mat->rows - 1)
-        stream << std::endl;
-    }
-    stream << "^T";
+    // for (int r = 0; r < mat->cols; r++)
+    // {
+    //     int s = mat->colPtr[r];
+    //     int e = mat->colPtr[r + 1];
+    //     for (int c = 0; c < mat->rows; c++)
+    //     {
+    //         if (s < e && c == mat->dataRow[s])
+    //         {
+    //             stream << mat->dataVal[s] << "\t";
+    //             s++;
+    //         }
+    //         else
+    //             stream << "0\t";
+    //     }
+    //     // if (r != mat->rows - 1)
+    //     stream << std::endl;
+    // }
+    // stream << "^T";
 
     return stream;
 }
@@ -458,17 +458,18 @@ std::ostream &operator<<(std::ostream &stream, LF_SpVector<T> *v)
     stream << "len: " << v->len << " , nnz: " << v->nnz << std::endl;
     stream << "(ind, data): ";
     for (int i = 0; i < v->nnz; i++) {
-        stream << "(" << v->elements[i].idx << ", " << v->elements[i].data << "), ";
+        stream << "[" << v->elements[i].idx << ", " << v->elements[i].data << "], ";
+        // stream << "(" << v->elements[i].idx << ", " << v->elements[i].data << "), ";
     }
     stream << std::endl;
-    int idx = 0;
-    for (int i = 0; i < v->len; i++) {
-        if (idx < v->nnz && v->elements[idx].idx == i) {
-            stream << v->elements[idx++].data << "\t"; 
-        }
-        else
-            stream << "0\t";
-    }
+    // int idx = 0;
+    // for (int i = 0; i < v->len; i++) {
+    //     if (idx < v->nnz && v->elements[idx].idx == i) {
+    //         stream << v->elements[idx++].data << "\t"; 
+    //     }
+    //     else
+    //         stream << "0\t";
+    // }
     return stream;
 }
 
