@@ -28,18 +28,18 @@ __global__ void spmspv_bucket_prepare(int rowsA, int colsA, int* colPtrA, int* d
         }
     }
 
-    // __syncthreads();
-    // for (int i = tx; i < nbucket; i += stride) {
-    //     for (int j = 1; j < stride; j++) 
-    //         d_Boffset[j * nbucket + i] += d_Boffset[(j-1) * nbucket + i];
-    // }
+    __syncthreads();
+    for (int i = tx; i < nbucket; i += stride) {
+        for (int j = 1; j < stride; j++) 
+            d_Boffset[j * nbucket + i] += d_Boffset[(j-1) * nbucket + i];
+    }
 
-    // __syncthreads();
-    // if (tx == 0) {
-    //     d_Boffset[stride * nbucket] = d_Boffset[(stride-1) * nbucket];
-    //     for (int i = 1; i < nbucket; i++)
-    //         d_Boffset[stride * nbucket + i] = d_Boffset[stride * nbucket + i-1] + d_Boffset[(stride-1) * nbucket + i];
-    // }
+    __syncthreads();
+    if (tx == 0) {
+        d_Boffset[stride * nbucket] = d_Boffset[(stride-1) * nbucket];
+        for (int i = 1; i < nbucket; i++)
+            d_Boffset[stride * nbucket + i] = d_Boffset[stride * nbucket + i-1] + d_Boffset[(stride-1) * nbucket + i];
+    }
     
 }
 __global__ void spmspv_bucket_insert(int rowsA, int colsA, int* colPtrA, int* dataRowA, double* dataValA, int lenB, int nnzB, listformat_element<double>* elementsB, int* d_Boffset, int nbucket, struct listformat_element<double> *d_bucket, double* d_SPA) {
@@ -141,24 +141,24 @@ LF_SpVector<double>* spmspv_bucket(CSCMatrix<double>* A, LF_SpVector<double>* B)
     cudaDeviceSynchronize();
 
     // Boffset debugging
-    int* h_Boffset;
-    h_Boffset = (int*)malloc(Boffset_zize);
-    cudaMemcpy(h_Boffset, d_Boffset, Boffset_zize, cudaMemcpyDeviceToHost);
+    // int* h_Boffset;
+    // h_Boffset = (int*)malloc(Boffset_zize);
+    // cudaMemcpy(h_Boffset, d_Boffset, Boffset_zize, cudaMemcpyDeviceToHost);
 
-        std::cout << "Boffset:\n[";
-        for (int i = 64; i < 65; i++) {
-            // std::cout << i << ": ";
-            std::cout << "[";
-            for (int j = 0; j < 64*4; j++) {
-                std::cout << *(h_Boffset+ i*64*4+j);
-                if (j != 64*4-1)
-                    std::cout << ", ";
-            }
-            std::cout << "]";
-            if (i != 64)
-            std::cout << ",";
-        }
-        std::cout << "]" << std::endl;
+    //     std::cout << "Boffset:\n[";
+    //     for (int i = 64; i < 65; i++) {
+    //         // std::cout << i << ": ";
+    //         std::cout << "[";
+    //         for (int j = 0; j < 64*4; j++) {
+    //             std::cout << *(h_Boffset+ i*64*4+j);
+    //             if (j != 64*4-1)
+    //                 std::cout << ", ";
+    //         }
+    //         std::cout << "]";
+    //         if (i != 64)
+    //         std::cout << ",";
+    //     }
+    //     std::cout << "]" << std::endl;
 
     spmspv_bucket_insert<<<numBlocks, threadsPerBlock>>>(A->rows, A->cols, d_colPtrA, d_dataRowA, d_dataValA, B->len, B->nnz, d_elements_B, d_Boffset, nbucket, d_bucket, d_SPA);
     h_SPA = (double*)malloc(spa_size);
