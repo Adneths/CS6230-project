@@ -14,7 +14,7 @@ namespace GCOOSPMM
     // CUDA kernel function
     // *a thread block is responsible for a group calculation
     __global__ void GCOOSpMMKernel(double *values, int *cols, int *rows, int *gIdxes,
-                                   int nnzPerGroup, int wA, int hA, double *B, int wB, int hB, double *C)
+                                   int *nnzPerGroup, int wA, int hA, double *B, int wB, int hB, double *C)
     {
         // find the location of the thread in C's column
         int Cj = blockIdx.y * b_value + threadIdx.x;
@@ -23,13 +23,15 @@ namespace GCOOSPMM
         // a local array for storing the submatrix of C calculated by a thread
         double c[p_value] = {0};
 
+        int CurGroupNNZ = nnzPerGroup[blockIdx.x];
+
         // find the "start" index of current group
         double *vals = values + gIdxes[blockIdx.x];
         int *co_cols = cols + gIdxes[blockIdx.x];
         int *co_rows = rows + gIdxes[blockIdx.x];
 
         // calculate the iteration of current group, b also means the number of thread in a thread block
-        int iter = (nnzPerGroup + b_value - 1) / b_value; // inorder to move all the data of a thread block into the shared memory
+        int iter = (CurGroupNNZ + b_value - 1) / b_value; // inorder to move all the data of a thread block into the shared memory
 
         // 遍历当前组中的所有非零元素
         for (int i = 0; i < iter; ++i)
@@ -41,7 +43,7 @@ namespace GCOOSPMM
             __shared__ int sRows[b_value];
 
             // 加载当前组的COO数据到共享内存
-            if (threadIdx.x < b_value && (cooOffset + threadIdx.x) < nnzPerGroup)
+            if (threadIdx.x < b_value && (cooOffset + threadIdx.x) < CurGroupNNZ)
             { // 确保不会超出当前组的大小
                 sVals[threadIdx.x] = vals[cooOffset + threadIdx.x];
                 sCols[threadIdx.x] = co_cols[cooOffset + threadIdx.x];
@@ -74,7 +76,7 @@ namespace GCOOSPMM
                     int k = 1;
                     while (j + k < b_value && sCols[j + k] == col)
                     {
-                        if (j + k >= nnzPerGroup)
+                        if (j + k >= CurGroupNNZ)
                             break;
                         av = sVals[j + k];
                         row = sRows[j + k];
