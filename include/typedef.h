@@ -309,7 +309,7 @@ struct GCOO
 
     {
         printf("hhhhhh");
-        int row_index = 0;
+        //     int row_index = 0;
         //     for (int i = 0; i < mat->rows; i++)
         //     {
         //         for (int j = 0; j < rowPtr[i + 1] - rowPtr[i]; j++)
@@ -349,27 +349,26 @@ struct GCOO
         //               << "gidxes:" << this->gIdexs << "\n"
         //               << "nnzpergroup:" << this->nnzpergroup << "\n"
         //               << "values:" << this->values << "\n\n";
-        // }
     }
-    ~GCOO()
-    {
-        if (nnzpergroup != nullptr)
-            free(nnzpergroup);
-        if (gIdexs != nullptr)
-            free(gIdexs);
-        if (cols != nullptr)
-            free(cols);
-        if (rows != nullptr)
-            free(rows);
-        if (values != nullptr)
-            free(values);
-        if (rowPtr != nullptr)
-            free(rowPtr);
-    }
-    void info()
-    {
-        printf("%dx%d (%d)\n", num_row, num_col, nnz);
-    }
+    // ~GCOO()
+    // {
+    //     if (nnzpergroup != nullptr)
+    //         free(nnzpergroup);
+    //     if (gIdexs != nullptr)
+    //         free(gIdexs);
+    //     if (cols != nullptr)
+    //         free(cols);
+    //     if (rows != nullptr)
+    //         free(rows);
+    //     if (values != nullptr)
+    //         free(values);
+    //     if (rowPtr != nullptr)
+    //         free(rowPtr);
+    // }
+    // void info()
+    // {
+    //     printf("%dx%d (%d)\n", num_row, num_col, nnz);
+    // }
 };
 
 template <typename T>

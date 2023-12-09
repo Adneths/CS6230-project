@@ -142,7 +142,7 @@ int main(int argc, char **argv)
         std::cout << "mat is valid, rows: " << matrix->rows << std::endl;
     }
 
-    GCOO<double> *gcoo_spm = new GCOO<double>(32);
+    GCOO<double> *gcoo_spm = new GCOO<double>(p_value);
     // std::cout << "input sparse matrix:\n";
     // std::cout << "row pointer:";
     // for (int i = 0; i < matrix->rows + 1; i++)
