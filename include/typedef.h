@@ -203,6 +203,7 @@ struct CSRMatrix
     void info()
     {
         printf("%dx%d (%d)\n", rows, cols, nnz);
+        printf("Density: %f\n", (double nnz)/(double rows * cols));
     }
 };
 
@@ -437,15 +438,15 @@ std::ostream &operator<<(std::ostream &stream, SpVector<T> *v)
     for (int i = 0; i < v->nnz; i++) {
         stream << "(" << v->ind[i] << ", " << v->data[i] << "), ";
     }
-    stream << std::endl;
-    int idx = 0;
-    for (int i = 0; i < v->len; i++) {
-        if (idx < v->nnz && v->ind[idx] == i) {
-            stream << v->data[idx++] << "\t"; 
-        }
-        else
-            stream << "0\t";
-    }
+    // stream << std::endl;
+    // int idx = 0;
+    // for (int i = 0; i < v->len; i++) {
+    //     if (idx < v->nnz && v->ind[idx] == i) {
+    //         stream << v->data[idx++] << "\t"; 
+    //     }
+    //     else
+    //         stream << "0\t";
+    // }
     return stream;
 }
 
