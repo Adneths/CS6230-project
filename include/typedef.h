@@ -307,7 +307,7 @@ struct GCOO
     int *nnzpergroup;
     GCOO(CSRMatrix<T> *mat, int p) // p it the number of rows of a group in sparse matrix
         : num_row(mat->rows), num_col(mat->cols), nnz(mat->nnz),
-          num_group((mat->rows - 1 + p) / p), rowPtr(mat->rowPtr), cols(mat->dataCol), values(matrix->dataval)
+          num_group((mat->rows - 1 + p) / p), rowPtr(mat->rowPtr), cols(mat->dataCol), values(mat->dataval)
     {
         int row_index = 0;
         for (int i = 0; i < nnz; i++)
