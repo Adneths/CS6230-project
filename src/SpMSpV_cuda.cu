@@ -13,6 +13,16 @@
 #include "timer.h"
 #endif
 
+#define CHECK_CUDA(func)                                                       \
+{                                                                              \
+    cudaError_t status = (func);                                               \
+    if (status != cudaSuccess) {                                               \
+        printf("CUDA API failed at line %d with error: %s (%d)\n",             \
+               __LINE__, cudaGetErrorString(status), status);                  \
+        return nullptr;                                                        \
+    }                                                                          \
+}
+
 namespace cuda {
 
 SpVector<double>* gen_rand_spvec(int len, double sparsity, int* ind, double* data) {
@@ -84,12 +94,12 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
     dataValB_size = (B->nnz) * sizeof(double),
     dataValC_size = (A->rows) * sizeof(double);
 
-    cudaMalloc(&d_rowPtrA , rowPtrA_size );
-    cudaMalloc(&d_dataColA, dataColA_size);
-    cudaMalloc(&d_dataValA, dataValA_size);
-    cudaMalloc(&d_indB, indB_size);
-    cudaMalloc(&d_dataValB, dataValB_size);
-    cudaMalloc(&d_dataValC, dataValC_size);
+    CHECK_CUDA(cudaMalloc(&d_rowPtrA , rowPtrA_size ));
+    CHECK_CUDA(cudaMalloc(&d_dataColA, dataColA_size));
+    CHECK_CUDA(cudaMalloc(&d_dataValA, dataValA_size));
+    CHECK_CUDA(cudaMalloc(&d_indB, indB_size));
+    CHECK_CUDA((&d_dataValB, dataValB_size));
+    CHECK_CUDA(cudaMalloc(&d_dataValC, dataValC_size));
 
     cudaMemcpy(d_rowPtrA , A->rowPtr , rowPtrA_size , cudaMemcpyHostToDevice);
     cudaMemcpy(d_dataColA, A->dataCol, dataColA_size, cudaMemcpyHostToDevice);
@@ -101,6 +111,7 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
 
     dim3 threadsPerBlock(32 * ((A->rows + 31) / 32));
 
+    std::cout << "threadPerBlock: " << threadPerBlock << std::endl;
     // Calculate the number of blocks as an integer first
     int numBlocksInt = (A->rows + threadsPerBlock.x - 1) / threadsPerBlock.x;
     
