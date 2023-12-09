@@ -98,7 +98,7 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
     CHECK_CUDA(cudaMalloc(&d_dataColA, dataColA_size));
     CHECK_CUDA(cudaMalloc(&d_dataValA, dataValA_size));
     CHECK_CUDA(cudaMalloc(&d_indB, indB_size));
-    CHECK_CUDA((&d_dataValB, dataValB_size));
+    CHECK_CUDA(cudaMalloc(&d_dataValB, dataValB_size));
     CHECK_CUDA(cudaMalloc(&d_dataValC, dataValC_size));
 
     cudaMemcpy(d_rowPtrA , A->rowPtr , rowPtrA_size , cudaMemcpyHostToDevice);
