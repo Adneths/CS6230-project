@@ -48,7 +48,6 @@ struct SpVector
                 t++;
             }
     }
-
 };
 
 template <typename T>
@@ -256,7 +255,7 @@ struct CSCMatrix
         printf("In CSCMatrix Construction:\n");
         printf("rows: %d\n", rows);
         printf("cols: %d\n", cols);
-         
+
         if (mat->value_type == value_type_t::PATTERN)
         {
             dataVal = (T *)malloc(nnz * sizeof(T));
@@ -285,6 +284,61 @@ struct CSCMatrix
     void info()
     {
         printf("%dx%d (%d)\n", rows, cols, nnz);
+    }
+};
+
+template <typename T>
+struct GCOO
+{
+    int num_row;
+    int num_col;
+    int nnz;
+    int num_group;
+    int *rowPtr;
+    T *values;
+    int *rows;
+    int *cols;
+    int *gIdexs;
+    int *nnzpergroup;
+    GCOO(CSRMatrix *mat, int p) // p it the number of rows of a group in sparse matrix
+        : num_row(mat->rows), num_col(mat->cols), nnz(mat->nnz),
+          num_group((mat->rows - 1 + p) / p), rowPtr(mat->rowptr), cols(mat->datacol), values(matrix->dataval)
+    {
+        int row_index = 0;
+        for (int i = 0; i < nnz; i++)
+        {
+            for (int j = 0; j < rowPtr[i + 1] - rowPtr[i]; j++)
+            {
+                rows[row_index] = i + 1;
+                row_index++;
+            }
+        }
+        std::cout << bool(row_index == nnz - 1) << "row_index == nnz-1\n";
+    }
+
+    for (int i = 0; i < num_group; i++)
+    {
+        gIdexs[i] = i * num_group;
+        nnzpergroup[i] = rowPtr[(i + 1) * p] - rowPtr[i * p];
+    }
+    ~GCOO()
+    {
+        if (nnzpergroup != nullptr)
+            free(nnzpergroup);
+        if (gIdexs != nullptr)
+            free(gIdexs);
+        if (cols != nullptr)
+            free(cols);
+        if (rows != nullptr)
+            free(rows);
+        if (values != nullptr)
+            free(values);
+        if (rowPtr != nullptr)
+            free(rowPtr);
+    }
+    void info()
+    {
+        printf("%dx%d (%d)\n", num_row, num_col, nnz);
     }
 };
 
@@ -342,11 +396,13 @@ std::ostream &operator<<(std::ostream &stream, CSRMatrix<T> *mat)
     stream << "CSRMatrix:" << mat->rows << "x" << mat->cols << ": " << mat->nnz << std::endl;
 
     stream << "rowPtr: ";
-    for (int r = 0; r < mat->rows+1; r++)
+    for (int r = 0; r < mat->rows + 1; r++)
         stream << mat->rowPtr[r] << " ";
-    stream << std::endl << "dataCol: ";
-    for (int n = 0; n < mat->nnz; n ++)
-        stream << mat->dataCol[n] << " ";;
+    stream << std::endl
+           << "dataCol: ";
+    for (int n = 0; n < mat->nnz; n++)
+        stream << mat->dataCol[n] << " ";
+    ;
     stream << std::endl;
 
     for (int r = 0; r < mat->rows; r++)
@@ -378,11 +434,13 @@ std::ostream &operator<<(std::ostream &stream, CSCMatrix<T> *mat)
     stream << "CSCMatrix:  " << mat->rows << "x" << mat->cols << ": " << mat->nnz << std::endl;
 
     stream << "colPtr: ";
-    for (int r = 0; r < mat->cols+1; r++)
+    for (int r = 0; r < mat->cols + 1; r++)
         stream << mat->colPtr[r] << " ";
-    stream << std::endl << "dataRow: ";
-    for (int n = 0; n < mat->nnz; n ++)
-        stream << mat->dataRow[n] << " ";;
+    stream << std::endl
+           << "dataRow: ";
+    for (int n = 0; n < mat->nnz; n++)
+        stream << mat->dataRow[n] << " ";
+    ;
     stream << std::endl;
 
     // for (int r = 0; r < mat->cols; r++)
@@ -434,14 +492,17 @@ std::ostream &operator<<(std::ostream &stream, SpVector<T> *v)
 
     stream << "len: " << v->len << " , nnz: " << v->nnz << std::endl;
     stream << "(ind, data): ";
-    for (int i = 0; i < v->nnz; i++) {
+    for (int i = 0; i < v->nnz; i++)
+    {
         stream << "(" << v->ind[i] << ", " << v->data[i] << "), ";
     }
     stream << std::endl;
     int idx = 0;
-    for (int i = 0; i < v->len; i++) {
-        if (idx < v->nnz && v->ind[idx] == i) {
-            stream << v->data[idx++] << "\t"; 
+    for (int i = 0; i < v->len; i++)
+    {
+        if (idx < v->nnz && v->ind[idx] == i)
+        {
+            stream << v->data[idx++] << "\t";
         }
         else
             stream << "0\t";
@@ -457,7 +518,8 @@ std::ostream &operator<<(std::ostream &stream, LF_SpVector<T> *v)
 
     stream << "len: " << v->len << " , nnz: " << v->nnz << std::endl;
     stream << "(ind, data): ";
-    for (int i = 0; i < v->nnz; i++) {
+    for (int i = 0; i < v->nnz; i++)
+    {
         stream << "[" << v->elements[i].idx << ", " << v->elements[i].data << "], ";
         // stream << "(" << v->elements[i].idx << ", " << v->elements[i].data << "), ";
     }
@@ -465,7 +527,7 @@ std::ostream &operator<<(std::ostream &stream, LF_SpVector<T> *v)
     // int idx = 0;
     // for (int i = 0; i < v->len; i++) {
     //     if (idx < v->nnz && v->elements[idx].idx == i) {
-    //         stream << v->elements[idx++].data << "\t"; 
+    //         stream << v->elements[idx++].data << "\t";
     //     }
     //     else
     //         stream << "0\t";
@@ -499,4 +561,3 @@ std::ostream &operator<<(std::ostream &stream, listformat_element<T> v)
 }
 
 #endif
-

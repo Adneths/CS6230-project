@@ -14,6 +14,10 @@ extern "C"
 #include <bebop/smc/csr_matrix.h>
 }
 
+// hyper-paratemers: is dealed by a thread block
+#define b 32 // number of columns in a group in dense matrix = number of threads in a thread block
+#define p 32 // number of rows in a group in sparse matrix
+
 static bool compare(CSRMatrix<double> *a, CSRMatrix<double> *b, double epsilon = 0.00001)
 {
     if (a == nullptr || a->rowPtr == nullptr || a->dataCol == nullptr || a->dataVal == nullptr)
@@ -129,46 +133,48 @@ int main(int argc, char **argv)
     printf("%s: ", argv[1]);
     struct csr_matrix_t *csr_mat = csc_to_csr((struct csc_matrix_t *)spm->repr);
     CSRMatrix<double> *matrix = new CSRMatrix<double>(csr_mat);
-    // double data[16] = {0,0,0,0, 0,0,0,1, 0,0,0,0, 0,1,0,1};
-    // CSRMatrix<double>* matrix = new CSRMatrix<double>(4, 4, data);
+
     matrix->info();
-    std::cout << "input sparse matrix:\n";
-    std::cout << "row pointer:";
-    for (int i = 0; i < matrix->rows + 1; i++)
-    {
-        std::cout << matrix->rowPtr[i] << ",";
-    }
-    std::cout << "\n";
-    std::cout << "data column:\n";
-    for (int i = 0; i < matrix->nnz; i++)
-    {
-        std::cout << matrix->dataCol[i] << ",";
-    }
-    std::cout << "\n";
-    std::cout << "data value:\n";
-    for (int i = 0; i < matrix->nnz; i++)
-    {
-        std::cout << matrix->dataVal[i] << ",";
-    }
-    std::cout << "\n";
-    std::cout << "\n";
+
+    GCOO<double> *gcoo_spm = new GCOO<double>(matrix, p);
+    // std::cout << "input sparse matrix:\n";
+    // std::cout << "row pointer:";
+    // for (int i = 0; i < matrix->rows + 1; i++)
+    // {
+    //     std::cout << matrix->rowPtr[i] << ",";
+    // }
+    // std::cout << "\n";
+    // std::cout << "data column:\n";
+    // for (int i = 0; i < matrix->nnz; i++)
+    // {
+    //     std::cout << matrix->dataCol[i] << ",";
+    // }
+    // std::cout << "\n";
+    // std::cout << "data value:\n";
+    // for (int i = 0; i < matrix->nnz; i++)
+    // {
+    //     std::cout << matrix->dataVal[i] << ",";
+    // }
+    // std::cout << "\n";
+    // std::cout << "\n";
     // std::cout << matrix << std::endl;
     // dense_mat<double> *dense_matrix(matrix->cols, matrix->cols);
     dense_mat<double> *dense_matrix = new dense_mat<double>(matrix->rows, matrix->cols);
-    std::cout << "dense matrix:\n";
-    for (int i = 0; i < matrix->cols; i++)
-    {
-        std::cout << "column" << i << ":";
-        for (int j = 0; j < matrix->rows; j++)
-        {
-            std::cout << dense_matrix->matrix[j * matrix->cols + i] << ",";
-        }
-        std::cout << "\n";
-    }
-    std::cout << "\n";
-    std::cout << "\n";
-    CSRMatrix<double> *spmm_result_cuda, *spmm_result_cusparse;
+    // std::cout << "dense matrix:\n";
+    // for (int i = 0; i < matrix->cols; i++)
+    // {
+    //     std::cout << "column" << i << ":";
+    //     for (int j = 0; j < matrix->rows; j++)
+    //     {
+    //         std::cout << dense_matrix->matrix[j * matrix->cols + i] << ",";
+    //     }
+    //     std::cout << "\n";
+    // }
+    // std::cout << "\n";
+    // std::cout << "\n";
+    CSRMatrix<double> *spmm_result_cuda, *spmm_result_cusparse *spmm_result_gcoo;
     spmm_result_cuda = cuda::spmm(matrix, dense_matrix);
+    spmm_result_gcoo = GCOOSPMM::spmm(gcoo_spm, dense_matrix, p, b);
     // spmm_result_cusparse = cusparse::spmv(matrix, dense_vector);
     // std::cout << result_cuda << std::endl;
 
@@ -177,6 +183,12 @@ int main(int argc, char **argv)
     printf("SPMM Cuda Results: ");
     if (spmm_result_cuda)
         spmm_result_cuda->info();
+    else
+        printf("nullptr\n");
+
+    printf("SPMM GCOO Results: ");
+    if (spmm_result_gcoo)
+        spmm_result_gcoo->info();
     else
         printf("nullptr\n");
     // printf("CuSparse Results: ");
@@ -188,26 +200,30 @@ int main(int argc, char **argv)
     //     printf("Cuda Result matches CuSparse Result\n");
     // else
     //     printf("Cuda Result does not match CuSparse Result\n");
-    std::cout << "result sparse matrix:\n";
-    std::cout << "row pointer:";
-    for (int i = 0; i < spmm_result_cuda->rows + 1; i++)
-    {
-        std::cout << spmm_result_cuda->rowPtr[i] << ",";
-    }
-    std::cout << "\n";
-    std::cout << "data column:";
-    for (int i = 0; i < spmm_result_cuda->nnz; i++)
-    {
-        std::cout << spmm_result_cuda->dataCol[i] << ",";
-    }
-    std::cout << "\n";
-    std::cout << "data value:";
-    for (int i = 0; i < spmm_result_cuda->nnz; i++)
-    {
-        std::cout << spmm_result_cuda->dataVal[i] << ",";
-    }
+
+    // std::cout << "result sparse matrix:\n";
+    // std::cout << "row pointer:";
+    // for (int i = 0; i < spmm_result_cuda->rows + 1; i++)
+    // {
+    //     std::cout << spmm_result_cuda->rowPtr[i] << ",";
+    // }
+    // std::cout << "\n";
+    // std::cout << "data column:";
+    // for (int i = 0; i < spmm_result_cuda->nnz; i++)
+    // {
+    //     std::cout << spmm_result_cuda->dataCol[i] << ",";
+    // }
+    // std::cout << "\n";
+    // std::cout << "data value:";
+    // for (int i = 0; i < spmm_result_cuda->nnz; i++)
+    // {
+    //     std::cout << spmm_result_cuda->dataVal[i] << ",";
+    // }
     delete matrix;
     delete spmm_result_cuda;
+    delete dense_matrix;
+    delete gcoo_spm;
+    delete spmm_result_gcoo;
     // delete spmm_result_cusparse;
     return 0;
 }
