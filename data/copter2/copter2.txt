@@ -1,0 +1,15 @@
+%-------------------------------------------------------------------------------
+% UF Sparse Matrix Collection, Tim Davis
+% http://www.cise.ufl.edu/research/sparse/matrices/GHS_psdef/copter2
+% name: GHS_psdef/copter2
+% [Gould, Hu, & Scott: Helicoptor rotor blade, from Pothen & Kumfert]
+% id: 1256
+% date: 2004
+% author: G. Kumfert, A. Pothen
+% ed: N. Gould, Y. Hu, J. Scott
+% fields: name title A id kind notes date author ed
+% kind: duplicate computational fluid dynamics problem
+%-------------------------------------------------------------------------------
+% notes:
+% GHS_psdef/copter2 is the nonzero pattern of GHS_indef/copter2.
+%-------------------------------------------------------------------------------
