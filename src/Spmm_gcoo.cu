@@ -13,18 +13,18 @@ namespace GCOOSPMM
 {
     // CUDA kernel function
     // *a thread block is responsible for a group calculation
-    __global__ void GCOOSpMMKernel(float *values, int *cols, int *rows, int *gIdxes,
-                                   int nnzPerGroup, int wA, int hA, float *B, int wB, int hB, float *C)
+    __global__ void GCOOSpMMKernel(double *values, int *cols, int *rows, int *gIdxes,
+                                   int nnzPerGroup, int wA, int hA, double *B, int wB, int hB, double *C)
     {
         // find the location of the thread in C's column
         int Cj = blockIdx.y * b_value + threadIdx.x;
         // find the "start" location of the thread in C's row
         int Ci0 = blockIdx.x * p_value;
         // a local array for storing the submatrix of C calculated by a thread
-        float c[p_value] = {0};
+        double c[p_value] = {0};
 
         // find the "start" index of current group
-        float *vals = values + gIdxes[blockIdx.x];
+        double *vals = values + gIdxes[blockIdx.x];
         int *co_cols = cols + gIdxes[blockIdx.x];
         int *co_rows = rows + gIdxes[blockIdx.x];
 
@@ -36,7 +36,7 @@ namespace GCOOSPMM
         {
             int cooOffset = i * b_value; // 计算COO偏移量
 
-            __shared__ float sVals[b_value];
+            __shared__ double sVals[b_value];
             __shared__ int sCols[b_value];
             __shared__ int sRows[b_value];
 
@@ -63,10 +63,10 @@ namespace GCOOSPMM
                 {
                     int col = sCols[j];
                     int row = sRows[j];
-                    float av = sVals[j];
+                    double av = sVals[j];
                     if (col == -1)
                         continue; // 跳过无效数据
-                    float bv = B[col * wB + Cj];
+                    double bv = B[col * wB + Cj];
                     int outIdx = row % p_value;
                     c[outIdx] += av * bv; // 执行乘加操作
 
