@@ -40,7 +40,7 @@ CSRMatrix<double>* spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
 #ifdef PROFILE
     nvtxNameOsThread(pthread_self(), "MAIN_THREAD");
     nvtxRangePushA("CuSparse_spgemm");
-    nvtxRangePushA("CuSparse_spgemm_setup");
+    nvtxRangePushA("CuSparse_spgemm_cudamalloc");
 #endif
     double              alpha       = 1.0f;
     double              beta        = 0.0f;
@@ -67,6 +67,10 @@ CSRMatrix<double>* spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     cudaMalloc(&d_dataValB, dataValB_size);
     cudaMalloc(&d_rowPtrC , rowPtrA_size );
 
+#ifdef PROFILE
+    nvtxRangePop();
+    nvtxRangePushA("CuSparse_spgemm_HtoD");
+#endif
     // Copy
     cudaMemcpy(d_rowPtrA , A->rowPtr , rowPtrA_size , cudaMemcpyHostToDevice);
     cudaMemcpy(d_dataColA, A->dataCol, dataColA_size, cudaMemcpyHostToDevice);
@@ -76,6 +80,10 @@ CSRMatrix<double>* spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     cudaMemcpy(d_dataValB, B->dataVal, dataValB_size, cudaMemcpyHostToDevice);
     //--------------------------------------------------------------------------
     // Cusparse Setup
+#ifdef PROFILE
+    nvtxRangePop();
+    nvtxRangePushA("CuSparse_spgemm_setupcusparse");
+#endif
     cusparseHandle_t     handle = NULL;
     cusparseSpMatDescr_t matA, matB, matC;
     void*  dBuffer1    = NULL, *dBuffer2   = NULL;
@@ -130,17 +138,22 @@ CSRMatrix<double>* spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
                                            &alpha, matA, matB, &beta, matC,
                                            computeType, CUSPARSE_SPGEMM_DEFAULT,
                                            spgemmDesc, &bufferSize2, dBuffer2) )
-#ifdef PROFILE
-    nvtxRangePop();
-    nvtxRangePushA("CuSparse_spgemm_deardown");
-#endif
+
     // get matrix C non-zero entries C_nnz
     int64_t C_num_rows1, C_num_cols1, C_nnz;
     CHECK_CUSPARSE( cusparseSpMatGetSize(matC, &C_num_rows1, &C_num_cols1, &C_nnz) )
     // allocate matrix C
+#ifdef PROFILE
+    nvtxRangePop();
+    nvtxRangePushA("CuSparse_spgemm_cudamalloc");
+#endif
     CHECK_CUDA( cudaMalloc((void**) &d_dataColC, C_nnz * sizeof(int)) )
     CHECK_CUDA( cudaMalloc((void**) &d_dataValC,  C_nnz * sizeof(double)) )
 
+#ifdef PROFILE
+    nvtxRangePop();
+    nvtxRangePushA("CuSparse_spgemm_DtoD");
+#endif
     // NOTE: if 'beta' != 0, the values of C must be update after the allocation
     //       of dC_values, and before the call of cusparseSpGEMM_copy
     // update matC with the new pointers
@@ -153,6 +166,10 @@ CSRMatrix<double>* spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
                             &alpha, matA, matB, &beta, matC,
                             computeType, CUSPARSE_SPGEMM_DEFAULT, spgemmDesc) )
 
+#ifdef PROFILE
+    nvtxRangePop();
+    nvtxRangePushA("CuSparse_spgemm_destroycusparse");
+#endif
     // destroy matrix/vector descriptors
     CHECK_CUSPARSE( cusparseSpGEMM_destroyDescr(spgemmDesc) )
     CHECK_CUSPARSE( cusparseDestroySpMat(matA) )
@@ -161,18 +178,34 @@ CSRMatrix<double>* spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     CHECK_CUSPARSE( cusparseDestroy(handle) )
     //--------------------------------------------------------------------------
     
+#ifdef PROFILE
+    nvtxRangePop();
+    nvtxRangePushA("CuSparse_spgemm_malloc");
+#endif
     int *h_rowPtrC, *h_dataColC;
     double *h_dataValC;
     h_rowPtrC = (int*)malloc((A->rows+1) * sizeof(int));
     h_dataColC = (int*)malloc(C_nnz * sizeof(int));
     h_dataValC = (double*)malloc(C_nnz * sizeof(double));
 
+#ifdef PROFILE
+    nvtxRangePop();
+    nvtxRangePushA("CuSparse_spgemm_DtoH");
+#endif
     cudaMemcpy(h_rowPtrC, d_rowPtrC, (A->rows+1) * sizeof(int), cudaMemcpyDeviceToHost);
     cudaMemcpy(h_dataColC, d_dataColC, C_nnz * sizeof(int), cudaMemcpyDeviceToHost);
     cudaMemcpy(h_dataValC, d_dataValC, C_nnz * sizeof(double), cudaMemcpyDeviceToHost);
 
+#ifdef PROFILE
+    nvtxRangePop();
+    nvtxRangePushA("CuSparse_spgemm_reconstruct");
+#endif
     CSRMatrix<double>* ret = new CSRMatrix<double>(A->rows, B->cols, h_rowPtrC, h_dataColC, h_dataValC, C_nnz);
 
+#ifdef PROFILE
+    nvtxRangePop();
+    nvtxRangePushA("CuSparse_spgemm_cudafree");
+#endif
     cudaFree(dBuffer1);
     cudaFree(dBuffer2);
     cudaFree(d_rowPtrA );

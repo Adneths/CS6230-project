@@ -20,8 +20,8 @@ SRC_PATH = src
 INCLUDE_PATHS += -I$(INCLUDE_PATH)
 
 SOURCES = main.cpp
-HEADERS = typedef.h timer.h SpGEMM_cuda.h SpGEMM_cusparse.h TileSpGEMM_cuda.h
-CUDA_SOURCES = SpGEMM_cuda.cu SpGEMM_cusparse.cu TileSpGEMM_cuda.cu
+HEADERS = typedef.h timer.h SpGEMM_cuda.h SpGEMM_cusparse.h # TileSpGEMM_cuda.h
+CUDA_SOURCES = SpGEMM_cuda.cu SpGEMM_cusparse.cu # TileSpGEMM_cuda.cu
 
 INCLUDE_HEADERS = ./$(INCLUDE_PATH)/$(shell echo $(HEADERS) | sed 's/ / \.\/$(INCLUDE_PATH)\//g')
 SRC_SOURCES= ./$(SRC_PATH)/$(shell echo $(SOURCES) | sed 's/ / \.\/$(SRC_PATH)\//g')

@@ -129,11 +129,10 @@ int main(int argc, char **argv) {
     rowPtr[5] = 2;
     rowPtr[6] = 3;
     std::fill(rowPtr.begin()+7, rowPtr.begin()+65, 3);
-    CSRMatrix<double>* matrix = new CSRMatrix<double>(64, 64, rowPtr.data(), dataCol.data(), dataVal.data(), 3);
-    matrix->info();*/
+    CSRMatrix<double>* matrix = new CSRMatrix<double>(64, 64, rowPtr.data(), dataCol.data(), dataVal.data(), 3);*/
+    matrix->info();
     CSRMatrix<double> *result_cuda, *result_cusparse;
-    result_cuda = cuda::tile_spgemm(matrix, matrix);
-    return 0;
+    result_cuda = cuda::spgemm(matrix, matrix);
     result_cusparse = cusparse::spgemm(matrix, matrix);
 
     printf("Cuda Results: ");

@@ -41,21 +41,27 @@ __device__ inline int binary_search_between(int* arr, int start, int end, int ta
     }
     return -1;
 }
+__device__ inline int decode(uint8_t rowcol) {
+    return (rowcol>>4)*16 + (rowcol&0x0f);
+}
 
 __global__ void tile_spgemm_cuda(int S, int *tileRowPtrC, int *tileColIdxC, int len,
-    int* dtileRowPtrA, int* dtileColIdxA, int* dtileNnzsA, uint8_t* drowPtrA, uint8_t* drowcolIdxA, double* dvalsA, uint16_t* dmasksA,
-    int* dtileColPtrB, int* dtileRowIdxB, int* dtileNnzsB, uint8_t* dcolPtrB, uint8_t* dcolrowIdxB, double* dvalsB, uint16_t* dmasksB)
+    int* tileRowPtrA, int* tileColIdxA, int* tileNnzsA, uint8_t* rowPtrA, uint8_t* rowcolIdxA, double* valsA, uint16_t* masksA,
+    int* tileColPtrB, int* tileRowIdxB, int* tileNnzsB, uint8_t* colPtrB, uint8_t* colrowIdxB, double* valsB, uint16_t* masksB)
 {
     __shared__ int matchA[1024];
     __shared__ int matchB[1024];
+    __shared__ double denseA[256];
+    __shared__ double denseBT[256];
+    __shared__ double denseC[256];
     int tx = threadIdx.x;
     int ty = threadIdx.y;
     int bx = blockIdx.x;
 
-    if (tx == 0 && ty == 0) {
-        // While tile-row is this tile-nnz in
-        int trow = binary_search_between(tileRowPtrC, 0, len, bx*S);
-        for (int n = 0; n < S; i++) {
+    // While tile-row is this tile-nnz in
+    int trow = binary_search_between(tileRowPtrC, 0, len, bx*S);
+    for (int n = 0; n < S; i++) {
+        if (tx == 0 && ty == 0) {
             int pos = 0;
             int idC = bx*S+n;
             // If outside of current row rebinary search starting at current tile-row
@@ -63,10 +69,10 @@ __global__ void tile_spgemm_cuda(int S, int *tileRowPtrC, int *tileColIdxC, int 
                 trow = binary_search_between(tileRowPtrC, trow, len, idC);
             int tcol = tileColIdxC[idC];
 
-            if (dtileRowPtrA[trow+1] - dtileRowPtrA[trow] < dtileColPtrB[tcol+1] - dtileColPtrB[tcol]) {
-                for (int i = dtileRowPtrA[trow]; i < dtileRowPtrA[trow+1]; i++) {
+            if (tileRowPtrA[trow+1] - tileRowPtrA[trow] < tileColPtrB[tcol+1] - tileColPtrB[tcol]) {
+                for (int i = tileRowPtrA[trow]; i < tileRowPtrA[trow+1]; i++) {
                     int match = 
-                        binary_search(dtileRowIdxB, dtileRowIdxB[dtileColPtrB[tcol]], dtileRowIdxB[dtileColPtrB[tcol]+1], dTileColIdxA[i]);
+                        binary_search(tileRowIdxB, tileRowIdxB[tileColPtrB[tcol]], tileRowIdxB[tileColPtrB[tcol]+1], tileColIdxA[i]);
                     if (match != -1) {
                         matchA[pos] = i;
                         matchB[pos] = match;
@@ -75,15 +81,32 @@ __global__ void tile_spgemm_cuda(int S, int *tileRowPtrC, int *tileColIdxC, int 
                 }
             }
             else {
-                for (int i = dtileColPtrB[tcol]; i < dtileColPtrB[tcol+1]; i++) {
+                for (int i = tileColPtrB[tcol]; i < tileColPtrB[tcol+1]; i++) {
                     int match = 
-                        binary_search(dtileColIdxA, dtileColIdxA[dtileRowPtrA[trow]], dtileColIdxA[dtileRowPtrA[trow]+1], dTileRowIdxB[i]);
+                        binary_search(tileColIdxA, tileColIdxA[tileRowPtrA[trow]], tileColIdxA[tileRowPtrA[trow]+1], tileRowIdxB[i]);
                     if (match != -1) {
                         matchA[pos] = match;
                         matchB[pos] = i;
                         atomicAdd(&pos, 1);
                     }
                 }
+            }
+        }
+        // Mask
+
+        int id = ty*16+tx;
+        denseC[id] = 0;
+        for (int i = 0; i < pos; i++) {
+            denseA[id] = 0; denseBT[id] = 0;
+            int s = rowPtrA[matchA[i]]; int e = tileNnzsA[matchA[i]+1];
+            if (id+s < e)
+                denseA[decode(rowcolIdxA[id+s])] = valsA[id+s];
+            s = colPtrB[matchA[i]]; e = tileNnzsB[matchA[i]+1];
+            if (id+s < e)
+                denseB[decode(colrowIdxB[id+s])] = valsB[id+s];
+
+            for (int j = 0; j < 16; j++) {
+                denseC[id] = denseA[ty*16+j] * denseBT[tx*16+j];
             }
         }
     }
