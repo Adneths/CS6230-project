@@ -306,65 +306,64 @@ struct GCOO
     int *gIdexs;
     int *nnzpergroup;
     GCOO(CSRMatrix<T> *mat, int p) // p it the number of rows of a group in sparse matrix
-        :
     {
         printf("hhhhhh");
-        int row_index = 0;
-        for (int i = 0; i < mat->rows; i++)
-        {
-            for (int j = 0; j < rowPtr[i + 1] - rowPtr[i]; j++)
-            {
-                rows[row_index] = i;
-                row_index++;
-            }
-        }
-        std::cout << bool(row_index == nnz - 1) << "row_index == nnz-1\n";
+        // int row_index = 0;
+        // for (int i = 0; i < mat->rows; i++)
+        // {
+        //     for (int j = 0; j < rowPtr[i + 1] - rowPtr[i]; j++)
+        //     {
+        //         rows[row_index] = i;
+        //         row_index++;
+        //     }
+        // }
+        // std::cout << bool(row_index == nnz - 1) << "row_index == nnz-1\n";
 
-        for (int i = 0; i < num_group; i++)
-        {
-            gIdexs[i] = i * num_group;
-            if ((i + 1) * p <= mat->rows)
-            {
-                nnzpergroup[i] = rowPtr[(i + 1) * p] - rowPtr[i * p];
-            }
-            else
-            {
-                nnzpergroup[i] = rowPtr[mat->rows] - rowPtr[i * p]; // the last group
-            }
-        }
-        // check the transformation:
-        std::cout << "Origin CSR format:\n"
-                  << "nnz:" << mat->nnz << "\n"
-                  << "rowptr:" << mat->rowPtr << "\n"
-                  << "dataCol:" << mat->dataCol << "\n"
-                  << "values:" << mat->dataVal << "\n\n";
+        // for (int i = 0; i < num_group; i++)
+        // {
+        //     gIdexs[i] = i * num_group;
+        //     if ((i + 1) * p <= mat->rows)
+        //     {
+        //         nnzpergroup[i] = rowPtr[(i + 1) * p] - rowPtr[i * p];
+        //     }
+        //     else
+        //     {
+        //         nnzpergroup[i] = rowPtr[mat->rows] - rowPtr[i * p]; // the last group
+        //     }
+        // }
+        // // check the transformation:
+        // std::cout << "Origin CSR format:\n"
+        //           << "nnz:" << mat->nnz << "\n"
+        //           << "rowptr:" << mat->rowPtr << "\n"
+        //           << "dataCol:" << mat->dataCol << "\n"
+        //           << "values:" << mat->dataVal << "\n\n";
 
-        std::cout << "Transformed GCOO format:\n"
-                  << "number of rows:" << this->num_row << "\n"
-                  << "number of cols:" << this->num_col << "\n"
-                  << "number of groups:" << this->num_group << "\n"
-                  << "nnz:" << this->nnz << "\n"
-                  << "rowptr_new:" << this->rows << "\n"
-                  << "colptr:" << this->cols << "\n"
-                  << "gidxes:" << this->gIdexs << "\n"
-                  << "nnzpergroup:" << this->nnzpergroup << "\n"
-                  << "values:" << this->values << "\n\n";
+        // std::cout << "Transformed GCOO format:\n"
+        //           << "number of rows:" << this->num_row << "\n"
+        //           << "number of cols:" << this->num_col << "\n"
+        //           << "number of groups:" << this->num_group << "\n"
+        //           << "nnz:" << this->nnz << "\n"
+        //           << "rowptr_new:" << this->rows << "\n"
+        //           << "colptr:" << this->cols << "\n"
+        //           << "gidxes:" << this->gIdexs << "\n"
+        //           << "nnzpergroup:" << this->nnzpergroup << "\n"
+        //           << "values:" << this->values << "\n\n";
     }
-    ~GCOO()
-    {
-        if (nnzpergroup != nullptr)
-            free(nnzpergroup);
-        if (gIdexs != nullptr)
-            free(gIdexs);
-        if (cols != nullptr)
-            free(cols);
-        if (rows != nullptr)
-            free(rows);
-        if (values != nullptr)
-            free(values);
-        if (rowPtr != nullptr)
-            free(rowPtr);
-    }
+    // ~GCOO()
+    // {
+    //     if (nnzpergroup != nullptr)
+    //         free(nnzpergroup);
+    //     if (gIdexs != nullptr)
+    //         free(gIdexs);
+    //     if (cols != nullptr)
+    //         free(cols);
+    //     if (rows != nullptr)
+    //         free(rows);
+    //     if (values != nullptr)
+    //         free(values);
+    //     if (rowPtr != nullptr)
+    //         free(rowPtr);
+    // }
     void info()
     {
         printf("%dx%d (%d)\n", num_row, num_col, nnz);
