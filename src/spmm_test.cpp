@@ -133,13 +133,13 @@ int main(int argc, char **argv)
 
     matrix->info();
 
-    if (mat == nullptr)
+    if (matrix == nullptr)
     {
         std::cerr << "Error: mat is nullptr" << std::endl;
     }
     else
     {
-        std::cout << "mat is valid, rows: " << mat->rows << std::endl;
+        std::cout << "mat is valid, rows: " << matrix->rows << std::endl;
     }
 
     GCOO<double> *gcoo_spm = new GCOO<double>(matrix, p_value);
