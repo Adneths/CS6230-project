@@ -6,6 +6,7 @@
 
 #include "typedef.h"
 #include "Spmm_cuda.h"
+#include "Spmm_gcoo.h"
 
 extern "C"
 {
@@ -16,7 +17,7 @@ extern "C"
 
 // hyper-paratemers: is dealed by a thread block
 #define b 32 // number of columns in a group in dense matrix = number of threads in a thread block
-#define p 32 // number of rows in a group in sparse matrix
+#define p 16 // number of rows in a group in sparse matrix
 
 static bool compare(CSRMatrix<double> *a, CSRMatrix<double> *b, double epsilon = 0.00001)
 {
@@ -172,7 +173,7 @@ int main(int argc, char **argv)
     // }
     // std::cout << "\n";
     // std::cout << "\n";
-    CSRMatrix<double> *spmm_result_cuda, *spmm_result_cusparse *spmm_result_gcoo;
+    CSRMatrix<double> *spmm_result_cuda, *spmm_result_cusparse, *spmm_result_gcoo;
     spmm_result_cuda = cuda::spmm(matrix, dense_matrix);
     spmm_result_gcoo = GCOOSPMM::spmm(gcoo_spm, dense_matrix, p, b);
     // spmm_result_cusparse = cusparse::spmv(matrix, dense_vector);

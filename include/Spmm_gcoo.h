@@ -5,6 +5,6 @@
 
 namespace GCOOSPMM
 {
-    CSRMatrix<double> *spmm(GCOO<double> *A, dense_mat<double> *DenseMatrixB);
+    CSRMatrix<double> *spmm(GCOO<double> *A, dense_mat<double> *DenseMatrixB, int p, int b);
 }
 #endif
