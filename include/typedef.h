@@ -315,7 +315,7 @@ struct GCOO
         {
             for (int j = 0; j < rowPtr[i + 1] - rowPtr[i]; j++)
             {
-
+                printf("yes\n");
                 rows[row_index] = i;
                 printf("yes\n");
                 row_index++;
