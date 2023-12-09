@@ -13,6 +13,16 @@
 #include "timer.h"
 #endif
 
+#define CHECK_CUDA(func)                                                       \
+{                                                                              \
+    cudaError_t status = (func);                                               \
+    if (status != cudaSuccess) {                                               \
+        printf("CUDA API failed at line %d with error: %s (%d)\n",             \
+               __LINE__, cudaGetErrorString(status), status);                  \
+        return nullptr;                                                        \
+    }                                                                          \
+}
+
 namespace cuda {
 
 SpVector<double>* gen_rand_spvec(int len, double sparsity, int* ind, double* data) {
@@ -84,12 +94,12 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
     dataValB_size = (B->nnz) * sizeof(double),
     dataValC_size = (A->rows) * sizeof(double);
 
-    cudaMalloc(&d_rowPtrA , rowPtrA_size );
-    cudaMalloc(&d_dataColA, dataColA_size);
-    cudaMalloc(&d_dataValA, dataValA_size);
-    cudaMalloc(&d_indB, indB_size);
-    cudaMalloc(&d_dataValB, dataValB_size);
-    cudaMalloc(&d_dataValC, dataValC_size);
+    CHECK_CUDA(cudaMalloc(&d_rowPtrA , rowPtrA_size ));
+    CHECK_CUDA(cudaMalloc(&d_dataColA, dataColA_size));
+    CHECK_CUDA(cudaMalloc(&d_dataValA, dataValA_size));
+    CHECK_CUDA(cudaMalloc(&d_indB, indB_size));
+    CHECK_CUDA(cudaMalloc(&d_dataValB, dataValB_size));
+    CHECK_CUDA(cudaMalloc(&d_dataValC, dataValC_size));
 
     cudaMemcpy(d_rowPtrA , A->rowPtr , rowPtrA_size , cudaMemcpyHostToDevice);
     cudaMemcpy(d_dataColA, A->dataCol, dataColA_size, cudaMemcpyHostToDevice);
@@ -99,13 +109,21 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
     cudaMemcpy(d_dataValB, B->data, dataValB_size, cudaMemcpyHostToDevice);
     cudaMemset(d_dataValC, 0, dataValC_size);
 
-    dim3 threadsPerBlock(32 * ((A->rows + 31) / 32));
 
+    int threadsPerBlock;
+    if (32 * ((A->rows + 31) / 32) < 1025)
+        threadsPerBlock = (32 * ((A->rows + 31) / 32));
+    else
+        threadsPerBlock = (1024);
+
+
+    std::cout << "threadsPerBlock: " << threadsPerBlock << std::endl;
     // Calculate the number of blocks as an integer first
-    int numBlocksInt = (A->rows + threadsPerBlock.x - 1) / threadsPerBlock.x;
+    int numBlocks = (A->rows + threadsPerBlock - 1) / threadsPerBlock;
+    std::cout << "numBlocks: " << numBlocks << std::endl;
     
     // Then use this integer to create a dim3 object
-    dim3 numBlocks(numBlocksInt);
+    // dim3 numBlocks(numBlocksInt);
     
 #ifdef PROFILE
     time = timer.tick();
@@ -219,13 +237,17 @@ LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<do
     cudaMemset(d_dataValC, 0, dataValC_size);
     cudaMemset(d_dataVecC, 0, dataVecC_size);
 
-    dim3 threadsPerBlock(32 * ((A->rows + 31) / 32));
+    int threadsPerBlock;
+    if (32 * ((A->rows + 31) / 32) < 1025)
+        threadsPerBlock = (32 * ((A->rows + 31) / 32));
+    else
+        threadsPerBlock = (1024);
 
     // Calculate the number of blocks as an integer first
     // int numBlocksInt = (B->nnz + threadsPerBlock.x - 1) / threadsPerBlock.x;
     
     // Then use this integer to create a dim3 object
-    dim3 numBlocks(B->nnz);
+    int numBlocks = B->nnz;
     
 #ifdef PROFILE
     time = timer.tick();
@@ -235,13 +257,17 @@ LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<do
 #endif
 
     spmspv_naive_vecdriven_mul<<<numBlocks, threadsPerBlock>>>(A->rows, A->cols, d_colPtrA, d_dataRowA, d_dataValA, B->len, B->nnz, d_elements_B, d_dataValC);
-    dim3 threadsPerBlock_1(32 * ((B->len + 31) / 32));
+    int threadsPerBlock_1;
+    if (32 * ((A->rows + 31) / 32) < 1025)
+        threadsPerBlock_1 = (32 * ((A->rows + 31) / 32));
+    else
+        threadsPerBlock_1 = (1024);
 
+
+    std::cout << "threadsPerBlock: " << threadsPerBlock_1 << std::endl;
     // Calculate the number of blocks as an integer first
-    int numBlocksInt = (B->len + threadsPerBlock_1.x - 1) / threadsPerBlock.x;
-    
-    // Then use this integer to create a dim3 object
-    dim3 numBlocks_1(numBlocksInt);
+    int numBlocks_1 = (A->rows + threadsPerBlock_1 - 1) / threadsPerBlock_1;
+    std::cout << "numBlocks: " << numBlocks_1 << std::endl;
     cudaDeviceSynchronize();
     spmspv_naive_vecdriven_dacc<<<numBlocks_1, threadsPerBlock_1>>>(B->len, d_dataValC, d_dataVecC);
     cudaDeviceSynchronize();

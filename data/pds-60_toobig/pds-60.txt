@@ -1,0 +1,22 @@
+%-------------------------------------------------------------------------------
+% UF Sparse Matrix Collection, Tim Davis
+% http://www.cise.ufl.edu/research/sparse/matrices/Mittelmann/pds-60
+% name: Mittelmann/pds-60
+% [Patient distribution (evacuation) system]
+% id: 1649
+% date: 1990
+% author: W. Carolan, J. Hill, J. Kennington, S. Niemi, S. Wichmann
+% ed: H. Mittelmann
+% fields: name title id kind date author ed A b aux notes
+% aux: c lo hi z0
+% kind: linear programming problem
+%-------------------------------------------------------------------------------
+% notes:
+% Hans Mittelmann test set, http://plato.asu.edu/ftp/lptestset       
+% minimize c'*x, subject to A*x=b and lo <= x <= hi                  
+%                                                                    
+% PDS:  Patient distribution (evacuation) system. see                
+% W. Carolan, J. Hill, J. Kennington, S. Niemi, and S. Wichmann, "An 
+% Empirical Evaluation of the KORBX Algorithms for Military Airlift,"
+% Applications, Operations Research, 38, (1990), 240-248.            
+%-------------------------------------------------------------------------------

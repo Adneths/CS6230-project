@@ -1,0 +1,24 @@
+%-------------------------------------------------------------------------------
+% SuiteSparse Matrix Collection, Tim Davis
+% https://sparse.tamu.edu/VLSI/nv1
+% name: VLSI/nv1
+% [VLSI: semiconductor device and process simulation]
+% id: 2834
+% date: 2018
+% author: Anonymous
+% ed: T. Davis
+% fields: name title A id date author ed kind notes Zeros
+% kind: semiconductor device problem
+%-------------------------------------------------------------------------------
+% notes:
+% VLSI: semiconductor device and process simulation                            
+%                                                                              
+% Process and Device Simulation matrices: nv1 and nv2 are very ill-conditioned.
+% Device simulation matrices in this set:                                      
+%    nv1, nv2, imagesensor, mosfet2, power9, radiation, test1, dgreen          
+% Process simulation matrices in this set:                                     
+%    vas_stokes_1M, vas_stokes_2M, vas_stokes_4M, stokes, ss1, ss              
+%                                                                              
+% Source: these are real matrices from industry.  The submittor                
+% requested that their name and company be withheld.                           
+%-------------------------------------------------------------------------------
