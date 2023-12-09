@@ -119,7 +119,7 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
 
     std::cout << "threadsPerBlock: " << threadsPerBlock << std::endl;
     // Calculate the number of blocks as an integer first
-    int numBlocks = (A->rows + threadsPerBlock - 1) / threadsPerBlock.x;
+    int numBlocks = (A->rows + threadsPerBlock - 1) / threadsPerBlock;
     std::cout << "numBlocks: " << numBlocks << std::endl;
     
     // Then use this integer to create a dim3 object
