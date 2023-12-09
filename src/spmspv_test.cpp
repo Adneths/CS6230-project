@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
 
     matrix->info();
     SpVector<double> *sp_matdriven, *sp_cusparse, *sp_rand;
-    LF_SpVector<double> *lfsp_vecdriven, *lfsp_randm *lf_bucket;
+    LF_SpVector<double> *lfsp_vecdriven, *lfsp_randm, *lf_bucket;
 
     
     double sparsity = 0.15;
@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
     lfsp_rand = new LF_SpVector<double>(*sp_rand);
     // printf("4.csc_matrix->cols: %d\n", csc_matrix->cols);
     lf_bucket = cuda::spmspv_bucket(csc_matrix, lfsp_rand);
-    
+
     sp_matdriven = cuda::spmspv_naive_matdriven(matrix, sp_rand);
 
     // printf("In main:\n");
