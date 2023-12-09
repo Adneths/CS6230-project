@@ -109,11 +109,16 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
     cudaMemcpy(d_dataValB, B->data, dataValB_size, cudaMemcpyHostToDevice);
     cudaMemset(d_dataValC, 0, dataValC_size);
 
-    dim3 threadsPerBlock(32 * ((A->rows + 31) / 32));
+    if (32 * ((A->rows + 31) / 32) < 1025)
+        dim3 threadsPerBlock(32 * ((A->rows + 31) / 32));
+    else
+        dim3 threadsPerBlock(1024);
+
 
     std::cout << "threadsPerBlock: " << threadsPerBlock.x << std::endl;
     // Calculate the number of blocks as an integer first
     int numBlocksInt = (A->rows + threadsPerBlock.x - 1) / threadsPerBlock.x;
+    std::cout << "numBlocks: " << numBlocksInt << std::endl;
     
     // Then use this integer to create a dim3 object
     dim3 numBlocks(numBlocksInt);
