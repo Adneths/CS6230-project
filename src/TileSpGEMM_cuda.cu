@@ -47,10 +47,11 @@ __device__ inline int decode(uint8_t rowcol) {
 
 __global__ void tile_spgemm_cuda(int S, int *tileRowPtrC, int *tileColIdxC, int len,
     int* tileRowPtrA, int* tileColIdxA, int* tileNnzsA, uint8_t* rowPtrA, uint8_t* rowcolIdxA, double* valsA, uint16_t* masksA,
-    int* tileColPtrB, int* tileRowIdxB, int* tileNnzsB, uint8_t* colPtrB, uint8_t* colrowIdxB, double* valsB, uint16_t* masksB)
+    int* tileColPtrB, int* tileRowIdxB, int* tileNnzsB, uint8_t* colPtrB, uint8_t* colrowIdxB, double* valsB, uint16_t* masksB,
+    int* tileRowPtrC, int* tileColIdxC, int* tileNnzsC, uint8_t* rowPtrC, uint8_t* rowcolIdxC, double* valsC, uint16_t* masksC)
 {
-    __shared__ int matchA[1024];
-    __shared__ int matchB[1024];
+    __shared__ int matchA[1024]; // Limits
+    __shared__ int matchB[1024]; // Limits
     __shared__ double denseA[256];
     __shared__ double denseBT[256];
     __shared__ double denseC[256];
@@ -92,7 +93,7 @@ __global__ void tile_spgemm_cuda(int S, int *tileRowPtrC, int *tileColIdxC, int 
                 }
             }
         }
-        // Mask
+        // Mask?
 
         int id = ty*16+tx;
         denseC[id] = 0;
@@ -106,9 +107,10 @@ __global__ void tile_spgemm_cuda(int S, int *tileRowPtrC, int *tileColIdxC, int 
                 denseB[decode(colrowIdxB[id+s])] = valsB[id+s];
 
             for (int j = 0; j < 16; j++) {
-                denseC[id] = denseA[ty*16+j] * denseBT[tx*16+j];
+                denseC[id] += denseA[ty*16+j] * denseBT[tx*16+j];
             }
         }
+        
     }
 }
 

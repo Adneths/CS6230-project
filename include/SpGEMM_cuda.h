@@ -4,6 +4,7 @@
 #include "typedef.h"
 
 namespace cuda {
-CSRMatrix<double>* spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B);
+CSRMatrix<double>* dacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B);
+CSRMatrix<double>* sacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B);
 }
 #endif

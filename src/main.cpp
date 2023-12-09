@@ -121,18 +121,18 @@ int main(int argc, char **argv) {
     std::fill(rowPtr.begin()+12, rowPtr.begin()+54, 2);
     std::fill(rowPtr.begin()+54, rowPtr.begin()+65, 3);*/
     /*
-    std::vector<int> rowPtr(65),
-    dataCol = {40, 16, 39};
-    std::vector<double> dataVal = {111,222,333};
-    std::fill(rowPtr.begin(), rowPtr.begin()+4, 0);
-    rowPtr[4] = 1;
-    rowPtr[5] = 2;
-    rowPtr[6] = 3;
-    std::fill(rowPtr.begin()+7, rowPtr.begin()+65, 3);
-    CSRMatrix<double>* matrix = new CSRMatrix<double>(64, 64, rowPtr.data(), dataCol.data(), dataVal.data(), 3);*/
+    std::vector<int> rowPtr(1101), dataCol(1100);
+    std::vector<double> dataVal(1100);
+    rowPtr[0] = 0;
+    for(int i = 0; i < 1100; i++) {
+        rowPtr[i+1] = 1100;
+        dataCol[i] = i;
+        dataVal[i] = i+1;
+    }
+    CSRMatrix<double>* matrix = new CSRMatrix<double>(1100, 1100, rowPtr.data(), dataCol.data(), dataVal.data(), 1100);*/
     matrix->info();
     CSRMatrix<double> *result_cuda, *result_cusparse;
-    result_cuda = cuda::spgemm(matrix, matrix);
+    result_cuda = cuda::dacc_spgemm(matrix, matrix);
     result_cusparse = cusparse::spgemm(matrix, matrix);
 
     printf("Cuda Results: ");
