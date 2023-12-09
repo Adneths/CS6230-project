@@ -311,6 +311,9 @@ struct GCOO
     {
         printf("hhhhhh\n");
         int row_index = 0;
+        rows = new int[nnz];
+        gIdexs = new int[num_group];
+        nnzpergroup = new int[num_group];
         for (int i = 0; i < mat->rows; i++)
         {
             for (int j = 0; j < rowPtr[i + 1] - rowPtr[i]; j++)
