@@ -132,9 +132,30 @@ int main(int argc, char **argv)
     // double data[16] = {0,0,0,0, 0,0,0,1, 0,0,0,0, 0,1,0,1};
     // CSRMatrix<double>* matrix = new CSRMatrix<double>(4, 4, data);
     matrix->info();
+    std::cout << "input sparse matrix:\n";
+    std::cout << "row pointer:\n";
+    for (int i = 0; i < matrix->rows; i++)
+    {
+        std::cout << matrix->rowPtr[i];
+    }
+    std::cout << "data column:\n";
+    for (int i = 0; i < matrix->cols; i++)
+    {
+        std::cout << matrix->dataCol[i];
+    }
+    std::cout << "data value:\n";
+    for (int i = 0; i < matrix->cols; i++)
+    {
+        std::cout << matrix->dataVal[i];
+    }
     // std::cout << matrix << std::endl;
     // dense_mat<double> *dense_matrix(matrix->cols, matrix->cols);
     dense_mat<double> *dense_matrix = new dense_mat<double>(matrix->rows, matrix->cols);
+    std::cout << "sparse matrix:\n";
+    for (int i = 0; i < matrix->cols * matrix->rows; i++)
+    {
+        std::cout << dense_matrix->matrix[i];
+    }
     CSRMatrix<double> *spmm_result_cuda, *spmm_result_cusparse;
     spmm_result_cuda = cuda::spmm(matrix, dense_matrix);
     // spmm_result_cusparse = cusparse::spmv(matrix, dense_vector);
@@ -156,7 +177,22 @@ int main(int argc, char **argv)
     //     printf("Cuda Result matches CuSparse Result\n");
     // else
     //     printf("Cuda Result does not match CuSparse Result\n");
-
+    std::cout << "result sparse matrix:\n";
+    std::cout << "row pointer:\n";
+    for (int i = 0; i < spmm_result_cuda->rows; i++)
+    {
+        std::cout << spmm_result_cuda->rowPtr[i];
+    }
+    std::cout << "data column:\n";
+    for (int i = 0; i < spmm_result_cuda->cols; i++)
+    {
+        std::cout << spmm_result_cuda->dataCol[i];
+    }
+    std::cout << "data value:\n";
+    for (int i = 0; i < spmm_result_cuda->cols; i++)
+    {
+        std::cout << spmm_result_cuda->dataVal[i];
+    }
     delete matrix;
     delete spmm_result_cuda;
     // delete spmm_result_cusparse;

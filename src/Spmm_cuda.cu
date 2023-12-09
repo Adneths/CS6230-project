@@ -74,6 +74,7 @@ namespace cuda
                 spmm_kx<<<numBlocks, threadsPerBlock>>>(d_rowPtrA, d_dataColA, d_dataValA,
                                                         MatrixOnGpu, DenseMatrixB->col_num,
                                                         d_dataValC);
+                cudaDeviceSynchronize();
 #ifdef PROFILE
                 time = timer.tick();
                 std::cout << "Cuda Compute: " << time << std::endl;
