@@ -13,15 +13,15 @@ namespace GCOOSPMM
 {
     // CUDA kernel function
     // *a thread block is responsible for a group calculation
-    __global__ void GCOOSpMMKernel(float *values, int *cols, int *rows, int p, int *gIdxes,
-                                   int nnzPerGroup, int wA, int hA, float *B, int b, int wB, int hB, float *C)
+    __global__ void GCOOSpMMKernel(float *values, int *cols, int *rows, int *gIdxes,
+                                   int nnzPerGroup, int wA, int hA, float *B, int wB, int hB, float *C)
     {
         // find the location of the thread in C's column
-        int Cj = blockIdx.y * b + threadIdx.x;
+        int Cj = blockIdx.y * b_value + threadIdx.x;
         // find the "start" location of the thread in C's row
-        int Ci0 = blockIdx.x * p;
+        int Ci0 = blockIdx.x * p_value;
         // a local array for storing the submatrix of C calculated by a thread
-        float c[p] = {0};
+        float c[p_value] = {0};
 
         // find the "start" index of current group
         float *vals = values + gIdxes[blockIdx.x];
@@ -29,19 +29,19 @@ namespace GCOOSPMM
         int *co_rows = rows + gIdxes[blockIdx.x];
 
         // calculate the iteration of current group, b also means the number of thread in a thread block
-        int iter = (nnzPerGroup + b - 1) / b; // inorder to move all the data of a thread block into the shared memory
+        int iter = (nnzPerGroup + b_value - 1) / b_value; // inorder to move all the data of a thread block into the shared memory
 
         // 遍历当前组中的所有非零元素
         for (int i = 0; i < iter; ++i)
         {
-            int cooOffset = i * b; // 计算COO偏移量
+            int cooOffset = i * b_value; // 计算COO偏移量
 
-            __shared__ float sVals[b];
-            __shared__ int sCols[b];
-            __shared__ int sRows[b];
+            __shared__ float sVals[b_value];
+            __shared__ int sCols[b_value];
+            __shared__ int sRows[b_value];
 
             // 加载当前组的COO数据到共享内存
-            if (threadIdx.x < b && (cooOffset + threadIdx.x) < nnzPerGroup)
+            if (threadIdx.x < b_value && (cooOffset + threadIdx.x) < nnzPerGroup)
             { // 确保不会超出当前组的大小
                 sVals[threadIdx.x] = vals[cooOffset + threadIdx.x];
                 sCols[threadIdx.x] = co_cols[cooOffset + threadIdx.x];
@@ -59,7 +59,7 @@ namespace GCOOSPMM
             // 如果当前线程对应的列索引在B矩阵范围内，则执行计算
             if (Cj < wB)
             {
-                for (int j = 0; j < b && sCols[j] != -1; ++j)
+                for (int j = 0; j < b_value && sCols[j] != -1; ++j)
                 {
                     int col = sCols[j];
                     int row = sRows[j];
@@ -67,18 +67,18 @@ namespace GCOOSPMM
                     if (col == -1)
                         continue; // 跳过无效数据
                     float bv = B[col * wB + Cj];
-                    int outIdx = row % p;
+                    int outIdx = row % p_value;
                     c[outIdx] += av * bv; // 执行乘加操作
 
                     // 内部循环，用于寻找可以重用bv值的连续非零元素
                     int k = 1;
-                    while (j + k < b && sCols[j + k] == col)
+                    while (j + k < b_value && sCols[j + k] == col)
                     {
                         if (j + k >= nnzPerGroup)
                             break;
                         av = sVals[j + k];
                         row = sRows[j + k];
-                        outIdx = row % p;
+                        outIdx = row % p_value;
                         c[outIdx] += av * bv;
                         k++;
                     }
@@ -91,14 +91,14 @@ namespace GCOOSPMM
         // 将中间结果数组c中的值写回到全局内存的C矩阵
         if (Cj < wB)
         {
-            for (int i = 0; i < p; ++i)
+            for (int i = 0; i < p_value; ++i)
             {
                 C[(Ci0 + i) * wB + Cj] = c[i];
             }
         }
     }
 
-    CSRMatrix<double> *spmm(GCOO<double> *A, dense_mat<double> *DenseMatrixB, int p, int b)
+    CSRMatrix<double> *spmm(GCOO<double> *A, dense_mat<double> *DenseMatrixB)
     {
 #ifdef PROFILE
         Timer timer;
@@ -133,16 +133,16 @@ namespace GCOOSPMM
         cudaMemcpy(d_Bvalues, DenseMatrixB->matrix, DenseMatrixB_size, cudaMemcpyHostToDevice);
         cudaMemset(d_Cvalues, 0, dataValC_size);
 
-        dim3 threadsPerBlock(b);
-        dim3 numBlocks((A->num_row + p - 1) / p, (DenseMatrixB->col_num + b - 1) / b);
+        dim3 threadsPerBlock(b_value);
+        dim3 numBlocks((A->num_row + p_value - 1) / p_value, (DenseMatrixB->col_num + b_value - 1) / b_value);
 #ifdef PROFILE
         time = timer.tick();
         std::cout << "Cuda Setup: " << time << std::endl;
         timer.tick();
 #endif
 
-        GCOOSpDMKernel<<<numBlocks, threadsPerBlock>>>(d_Avalues, d_Acols, d_Arows, p, d_AgIdxes, d_AnnzPerGroup,
-                                                       A->num_col, A->num_row, d_Bvalues, b, DenseMatrixB->col_num,
+        GCOOSpMMKernel<<<numBlocks, threadsPerBlock>>>(d_Avalues, d_Acols, d_Arows, d_AgIdxes, d_AnnzPerGroup,
+                                                       A->num_col, A->num_row, d_Bvalues, DenseMatrixB->col_num,
                                                        DenseMatrixB->row_num, d_Cvalues);
         cudaDeviceSynchronize();
 #ifdef PROFILE
