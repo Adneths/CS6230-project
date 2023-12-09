@@ -305,7 +305,7 @@ struct GCOO
     int *cols;
     int *gIdexs;
     int *nnzpergroup;
-    GCOO(CSRMatrix *mat, int p) // p it the number of rows of a group in sparse matrix
+    GCOO(CSRMatrix<T> *mat, int p) // p it the number of rows of a group in sparse matrix
         : num_row(mat->rows), num_col(mat->cols), nnz(mat->nnz),
           num_group((mat->rows - 1 + p) / p), rowPtr(mat->rowptr), cols(mat->datacol), values(matrix->dataval)
     {
@@ -319,12 +319,12 @@ struct GCOO
             }
         }
         std::cout << bool(row_index == nnz - 1) << "row_index == nnz-1\n";
-    }
 
-    for (int i = 0; i < num_group; i++)
-    {
-        gIdexs[i] = i * num_group;
-        nnzpergroup[i] = rowPtr[(i + 1) * p] - rowPtr[i * p];
+        for (int i = 0; i < num_group; i++)
+        {
+            gIdexs[i] = i * num_group;
+            nnzpergroup[i] = rowPtr[(i + 1) * p] - rowPtr[i * p];
+        }
     }
     ~GCOO()
     {
