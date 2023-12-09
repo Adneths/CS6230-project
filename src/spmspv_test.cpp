@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
 
     matrix->info();
     SpVector<double> *sp_matdriven, *sp_cusparse, *sp_rand;
-    LF_SpVector<double> *lfsp_vecdriven, *lfsp_randm, *lf_bucket;
+    LF_SpVector<double> *lfsp_vecdriven, *lfsp_rand, *lf_bucket;
 
     
     double sparsity = 0.15;
