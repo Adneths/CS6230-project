@@ -157,7 +157,7 @@ int main(int argc, char **argv) {
     LF_SpVector<double>* lf_bucket;
     lf_bucket = cuda::spmspv_bucket(csc_matrix, lfsp_rand);
     printf("matdriven output equals bucket output: %d\n",static_cast<int>(*sp_matdriven == *lf_bucket));
-    // std::cout << "output_bucket\n" << lf_bucket << std::endl;
+    std::cout << "output_bucket\n" << lf_bucket << std::endl;
 
     // int* h_Boffset = cuda::spmspv_bucket(csc_matrix, lfsp_rand);
     // std::cout << "CSCMatrix:\n" << csc_matrix << "\n";
