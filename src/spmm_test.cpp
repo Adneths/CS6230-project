@@ -156,12 +156,12 @@ int main(int argc, char **argv)
     // dense_mat<double> *dense_matrix(matrix->cols, matrix->cols);
     dense_mat<double> *dense_matrix = new dense_mat<double>(matrix->rows, matrix->cols);
     std::cout << "dense matrix:\n";
-    for (int i = 0; i < matrix->rows; i++)
+    for (int i = 0; i < matrix->cols; i++)
     {
-        std::cout << "row" << i << ":";
-        for (int j = 0; j < matrix->cols; j++)
+        std::cout << "column" << i << ":";
+        for (int j = 0; j < matrix->rows; j++)
         {
-            std::cout << dense_matrix->matrix[i * matrix->cols + j] << ",";
+            std::cout << dense_matrix->matrix[j * matrix->cols + i] << ",";
         }
         std::cout << "\n";
     }
