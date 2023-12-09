@@ -237,13 +237,17 @@ LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<do
     cudaMemset(d_dataValC, 0, dataValC_size);
     cudaMemset(d_dataVecC, 0, dataVecC_size);
 
-    dim3 threadsPerBlock(32 * ((A->rows + 31) / 32));
+    int threadsPerBlock;
+    if (32 * ((A->rows + 31) / 32) < 1025)
+        threadsPerBlock = (32 * ((A->rows + 31) / 32));
+    else
+        threadsPerBlock = (1024);
 
     // Calculate the number of blocks as an integer first
     // int numBlocksInt = (B->nnz + threadsPerBlock.x - 1) / threadsPerBlock.x;
     
     // Then use this integer to create a dim3 object
-    dim3 numBlocks(B->nnz);
+    int numBlocks = B->nnz;
     
 #ifdef PROFILE
     time = timer.tick();
@@ -253,13 +257,17 @@ LF_SpVector<double>* spmspv_naive_vecdriven(CSCMatrix<double>* A, LF_SpVector<do
 #endif
 
     spmspv_naive_vecdriven_mul<<<numBlocks, threadsPerBlock>>>(A->rows, A->cols, d_colPtrA, d_dataRowA, d_dataValA, B->len, B->nnz, d_elements_B, d_dataValC);
-    dim3 threadsPerBlock_1(32 * ((B->len + 31) / 32));
+    int threadsPerBlock_1;
+    if (32 * ((A->rows + 31) / 32) < 1025)
+        threadsPerBlock_1 = (32 * ((A->rows + 31) / 32));
+    else
+        threadsPerBlock_1 = (1024);
 
+
+    std::cout << "threadsPerBlock: " << threadsPerBlock_1 << std::endl;
     // Calculate the number of blocks as an integer first
-    int numBlocksInt = (B->len + threadsPerBlock_1.x - 1) / threadsPerBlock.x;
-    
-    // Then use this integer to create a dim3 object
-    dim3 numBlocks_1(numBlocksInt);
+    int numBlocks_1 = (A->rows + threadsPerBlock_1 - 1) / threadsPerBlock_1;
+    std::cout << "numBlocks: " << numBlocks_1 << std::endl;
     cudaDeviceSynchronize();
     spmspv_naive_vecdriven_dacc<<<numBlocks_1, threadsPerBlock_1>>>(B->len, d_dataValC, d_dataVecC);
     cudaDeviceSynchronize();
