@@ -309,6 +309,7 @@ struct GCOO
         : num_row(mat->rows), num_col(mat->cols), nnz(mat->nnz),
           num_group((mat->rows - 1 + p) / p), rowPtr(mat->rowPtr), cols(mat->dataCol), values(mat->dataVal)
     {
+        printf("hhhhhh");
         int row_index = 0;
         for (int i = 0; i < mat->rows; i++)
         {
