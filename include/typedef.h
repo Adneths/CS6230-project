@@ -203,7 +203,10 @@ struct CSRMatrix
     void info()
     {
         printf("%dx%d (%d)\n", rows, cols, nnz);
-        double density = (nnz * 1.0) / (rows * cols * 1.0);
+        double r = rows;
+        double c = cols;
+        double nz = nnz;
+        double density = nz / (r*c);
         printf("Density: %f\n",density);
     }
 };
