@@ -110,16 +110,13 @@ int main(int argc, char **argv) {
         return 1;
     printf("%s: ", argv[1]);
     struct csr_matrix_t* csr_mat = csc_to_csr((struct csc_matrix_t*)spm->repr);
-    CSRMatrix<double>* matrix = new CSRMatrix<double>(csr_mat);
+    //CSRMatrix<double>* matrix = new CSRMatrix<double>(csr_mat);
 //*/
-    /*
-    std::vector<int> rowPtr(65),
-    dataCol = {40, 16, 39};
-    std::vector<double> dataVal = {111,222,333};
-    std::fill(rowPtr.begin(), rowPtr.begin()+4, 0);
-    std::fill(rowPtr.begin()+4, rowPtr.begin()+12, 1);
-    std::fill(rowPtr.begin()+12, rowPtr.begin()+54, 2);
-    std::fill(rowPtr.begin()+54, rowPtr.begin()+65, 3);*/
+    
+    std::vector<int> rowPtr = {0,3,5,6,9},
+    dataCol = {0,2,3,  1,2,  3,  0,1,2};
+    std::vector<double> dataVal = {1,3,4,  6,7,  12,  13,14,15};
+    CSRMatrix<double>* matrix = new CSRMatrix<double>(4, 4, rowPtr.data(), dataCol.data(), dataVal.data(), 9);
     /*
     std::vector<int> rowPtr(1101), dataCol(1100);
     std::vector<double> dataVal(1100);
@@ -132,9 +129,11 @@ int main(int argc, char **argv) {
     CSRMatrix<double>* matrix = new CSRMatrix<double>(1100, 1100, rowPtr.data(), dataCol.data(), dataVal.data(), 1100);*/
     matrix->info();
     CSRMatrix<double> *result_cuda, *result_cusparse;
-    result_cuda = cuda::dacc_spgemm(matrix, matrix);
+    result_cuda = cuda::sacc_spgemm(matrix, matrix);
     result_cusparse = cusparse::spgemm(matrix, matrix);
-
+    std::cout << result_cuda << std::endl;
+    std::cout << result_cusparse << std::endl;
+    /*
     printf("Cuda Results: ");
     if (result_cuda) result_cuda->info(); else printf("nullptr\n");
     printf("CuSparse Results: ");
@@ -143,7 +142,7 @@ int main(int argc, char **argv) {
         printf("Cuda Result matches CuSparse Result\n");
     else
         printf("Cuda Result does not match CuSparse Result\n");
-
+    */
     delete matrix;
     delete result_cuda;
     delete result_cusparse;

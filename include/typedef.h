@@ -174,7 +174,7 @@ template <typename T>
 std::ostream& operator<<(std::ostream& stream, CSRMatrix<T>* mat) {
     if (mat->rowPtr==nullptr || mat->dataCol==nullptr || mat->dataVal==nullptr)
         return stream << "Invalid Matrix";
-
+    /*
     stream << mat->rows << "x" << mat->cols << ": " << mat->nnz << std::endl;
 
     for (int r = 0; r < mat->rows; r++) {
@@ -189,7 +189,20 @@ std::ostream& operator<<(std::ostream& stream, CSRMatrix<T>* mat) {
                 stream << "0\t";
         }
         if (r != mat->rows-1) stream << std::endl;
-    }
+    }*/
+    stream << "{ rows = " << mat->rows << ", cols = " << mat->cols << ", nnz = " << mat->nnz << "," << std::endl;
+    stream << "rowPtr = { " << mat->rowPtr[0];
+    for(int i = 1; i < mat->rows+1; i++)
+        stream << ", " << mat->rowPtr[i];
+    stream << " }" << std::endl;
+    stream << "dataCol = { " << mat->dataCol[0];
+    for(int i = 1; i < mat->nnz; i++)
+        stream << ", " << mat->dataCol[i];
+    stream << " }" << std::endl;
+    stream << "dataVal = { " << mat->dataVal[0];
+    for(int i = 1; i < mat->nnz; i++)
+        stream << ", " << mat->dataVal[i];
+    stream << " }" << std::endl << "}";
     return stream;
 }
 
