@@ -134,19 +134,19 @@ int main(int argc, char **argv)
     matrix->info();
     std::cout << "input sparse matrix:\n";
     std::cout << "row pointer:";
-    for (int i = 0; i < matrix->rows; i++)
+    for (int i = 0; i < matrix->rows + 1; i++)
     {
         std::cout << matrix->rowPtr[i] << ",";
     }
     std::cout << "\n";
     std::cout << "data column:\n";
-    for (int i = 0; i < matrix->cols; i++)
+    for (int i = 0; i < matrix->nnz; i++)
     {
         std::cout << matrix->dataCol[i] << ",";
     }
     std::cout << "\n";
     std::cout << "data value:\n";
-    for (int i = 0; i < matrix->cols; i++)
+    for (int i = 0; i < matrix->nnz; i++)
     {
         std::cout << matrix->dataVal[i] << ",";
     }
@@ -190,19 +190,19 @@ int main(int argc, char **argv)
     //     printf("Cuda Result does not match CuSparse Result\n");
     std::cout << "result sparse matrix:\n";
     std::cout << "row pointer:";
-    for (int i = 0; i < spmm_result_cuda->rows; i++)
+    for (int i = 0; i < spmm_result_cuda->rows + 1; i++)
     {
         std::cout << spmm_result_cuda->rowPtr[i] << ",";
     }
     std::cout << "\n";
     std::cout << "data column:";
-    for (int i = 0; i < spmm_result_cuda->cols; i++)
+    for (int i = 0; i < spmm_result_cuda->nnz; i++)
     {
         std::cout << spmm_result_cuda->dataCol[i] << ",";
     }
     std::cout << "\n";
     std::cout << "data value:";
-    for (int i = 0; i < spmm_result_cuda->cols; i++)
+    for (int i = 0; i < spmm_result_cuda->nnz; i++)
     {
         std::cout << spmm_result_cuda->dataVal[i] << ",";
     }
