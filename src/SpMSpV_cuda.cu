@@ -111,7 +111,7 @@ SpVector<double>* spmspv_naive_matdriven(CSRMatrix<double>* A, SpVector<double>*
 
     dim3 threadsPerBlock(32 * ((A->rows + 31) / 32));
 
-    std::cout << "threadPerBlock: " << threadPerBlock << std::endl;
+    std::cout << "threadsPerBlock: " << threadsPerBlock.x << std::endl;
     // Calculate the number of blocks as an integer first
     int numBlocksInt = (A->rows + threadsPerBlock.x - 1) / threadsPerBlock.x;
     
