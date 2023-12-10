@@ -119,13 +119,13 @@ namespace GCOOSPMM
             DenseMatrixB_size = (DenseMatrixB->total_size) * sizeof(double),
             dataValC_size = (A->num_row * DenseMatrixB->col_num) * sizeof(double);
 
-        cudaMalloc(&d_Arows, rowPtrA_size);
-        cudaMalloc(&d_Acols, colPtrA_size);
-        cudaMalloc(&d_Avalues, dataValA_size);
-        cudaMalloc(&d_AgIdxes, gIdxesA_size);
-        cudaMalloc(&d_AnnzPerGroup, nnzPerGroupA_size);
-        cudaMalloc(&d_Bvalues, DenseMatrixB_size);
-        cudaMalloc(&d_Cvalues, dataValC_size);
+        CHECK_CUDA(cudaMalloc(&d_Arows, rowPtrA_size));
+        CHECK_CUDA(cudaMalloc(&d_Acols, colPtrA_size));
+        CHECK_CUDA(cudaMalloc(&d_Avalues, dataValA_size));
+        CHECK_CUDA(cudaMalloc(&d_AgIdxes, gIdxesA_size));
+        CHECK_CUDA(cudaMalloc(&d_AnnzPerGroup, nnzPerGroupA_size));
+        CHECK_CUDA(cudaMalloc(&d_Bvalues, DenseMatrixB_size));
+        CHECK_CUDA(cudaMalloc(&d_Cvalues, dataValC_size));
 
         cudaMemcpy(d_Arows, A->rows, rowPtrA_size, cudaMemcpyHostToDevice);
         cudaMemcpy(d_Acols, A->cols, colPtrA_size, cudaMemcpyHostToDevice);

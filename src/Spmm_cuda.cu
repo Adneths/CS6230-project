@@ -9,6 +9,17 @@
 #include "timer.h"
 #endif
 
+#define CHECK_CUDA(func)                                                           \
+        {                                                                          \
+                cudaError_t status = (func);                                       \
+                if (status != cudaSuccess)                                         \
+                {                                                                  \
+                        printf("CUDA API failed at line %d with error: %s (%d)\n", \
+                               __LINE__, cudaGetErrorString(status), status);      \
+                        return nullptr;                                            \
+                }                                                                  \
+        }
+
 namespace cuda
 {
 
@@ -72,11 +83,11 @@ namespace cuda
                     DenseMatrixB_size = (DenseMatrixB->total_size) * sizeof(double),
                     dataValC_size = (A->rows * DenseMatrixB->col_num) * sizeof(double);
 
-                cudaMalloc(&d_rowPtrA, rowPtrA_size);
-                cudaMalloc(&d_dataColA, dataColA_size);
-                cudaMalloc(&d_dataValA, dataValA_size);
-                cudaMalloc(&MatrixOnGpu, DenseMatrixB_size);
-                cudaMalloc(&d_dataValC, dataValC_size);
+                CHECK_CUDA(cudaMalloc(&d_rowPtrA, rowPtrA_size));
+                CHECK_CUDA(cudaMalloc(&d_dataColA, dataColA_size));
+                CHECK_CUDA(cudaMalloc(&d_dataValA, dataValA_size));
+                CHECK_CUDA(cudaMalloc(&MatrixOnGpu, DenseMatrixB_size));
+                CHECK_CUDA(cudaMalloc(&d_dataValC, dataValC_size));
 
                 cudaMemcpy(d_rowPtrA, A->rowPtr, rowPtrA_size, cudaMemcpyHostToDevice);
                 cudaMemcpy(d_dataColA, A->dataCol, dataColA_size, cudaMemcpyHostToDevice);
@@ -85,7 +96,7 @@ namespace cuda
                 cudaMemset(d_dataValC, 0, dataValC_size);
 
                 // dim3 threadsPerBlock(32 * ((DenseMatrixB->col_num + 31) / 32));
-                dim3 threadsPerBlock(1024);
+                dim3 threadsPerBlock(1000);
                 dim3 numBlocks(A->rows);
 #ifdef PROFILE
                 time = timer.tick();
