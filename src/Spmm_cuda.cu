@@ -3,7 +3,7 @@
 #include <cuda_runtime_api.h>
 #include "device_launch_parameters.h"
 
-#include "SpMM_cuda.h"
+#include "Spmm_cuda.h"
 
 #ifdef PROFILE
 #include "timer.h"

@@ -1,5 +1,5 @@
-#ifndef SPMV_CUDA_H
-#define SPMV_CUDA_H
+#ifndef SPMM_CUDA_H
+#define SPMM_CUDA_H
 
 #include "typedef.h"
 
