@@ -49,7 +49,7 @@ static bool compare(CSRMatrix<double> *a, CSRMatrix<double> *b, double epsilon =
             {
                 if (std::abs(a->dataVal[as] - b->dataVal[bs]) >= epsilon)
                 {
-                    printf("A[%d,%d] = %f, B[%d,%d] = %f\n", i, a->dataCol[as], a->dataVal[as], i, b->dataCol[bs], b->dataVal[bs]);
+                    // printf("A[%d,%d] = %f, B[%d,%d] = %f\n", i, a->dataCol[as], a->dataVal[as], i, b->dataCol[bs], b->dataVal[bs]);
                     match = false;
                 }
                 as++;
@@ -59,13 +59,13 @@ static bool compare(CSRMatrix<double> *a, CSRMatrix<double> *b, double epsilon =
             {
                 if (a->dataCol[as] < b->dataCol[bs])
                 {
-                    printf("A[%d,%d] = %f, B[%d,%d] = %f\n", i, a->dataCol[as], a->dataVal[as], i, a->dataCol[as], 0.0);
+                    // printf("A[%d,%d] = %f, B[%d,%d] = %f\n", i, a->dataCol[as], a->dataVal[as], i, a->dataCol[as], 0.0);
                     match = false;
                     as++;
                 }
                 else
                 {
-                    printf("A[%d,%d] = %f, B[%d,%d] = %f\n", i, b->dataCol[as], 0.0, i, b->dataCol[as], b->dataVal[as]);
+                    // printf("A[%d,%d] = %f, B[%d,%d] = %f\n", i, b->dataCol[as], 0.0, i, b->dataCol[as], b->dataVal[as]);
                     match = false;
                     bs++;
                 }
@@ -74,14 +74,14 @@ static bool compare(CSRMatrix<double> *a, CSRMatrix<double> *b, double epsilon =
         if (as != ae && bs == be)
             while (as < ae)
             {
-                printf("A[%d,%d] = %f, B[%d,%d] = %f\n", i, a->dataCol[as], a->dataVal[as], i, a->dataCol[as], 0.0);
+                // printf("A[%d,%d] = %f, B[%d,%d] = %f\n", i, a->dataCol[as], a->dataVal[as], i, a->dataCol[as], 0.0);
                 match = false;
                 as++;
             }
         if (as == ae && bs != be)
             while (bs < be)
             {
-                printf("A[%d,%d] = %f, B[%d,%d] = %f\n", i, b->dataCol[as], 0.0, i, b->dataCol[as], b->dataVal[as]);
+                // printf("A[%d,%d] = %f, B[%d,%d] = %f\n", i, b->dataCol[as], 0.0, i, b->dataCol[as], b->dataVal[as]);
                 match = false;
                 bs++;
             }

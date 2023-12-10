@@ -107,6 +107,7 @@ namespace GCOOSPMM
             for (int i = 0; i < p_value; ++i)
             {
                 C[(Ci0 + i) * wB + Cj] = c[i];
+                printf("c[%d]=%f", i, c[i]);
             }
         }
     }
