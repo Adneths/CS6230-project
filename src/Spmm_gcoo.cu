@@ -107,7 +107,7 @@ namespace GCOOSPMM
             for (int i = 0; i < p_value; ++i)
             {
                 C[(Ci0 + i) * wB + Cj] = c[i];
-                printf("c[%d]=%f\n", i, c[i]);
+                // printf("c[%d]=%f\n", i, c[i]);
             }
         }
     }
@@ -148,7 +148,7 @@ namespace GCOOSPMM
         cudaMemset(d_Cvalues, 0, dataValC_size);
 
         // dim3 threadsPerBlock(b_value);
-        dim3 threadsPerBlock(64);
+        dim3 threadsPerBlock(4);
         dim3 numBlocks((A->num_row + p_value - 1) / p_value, (DenseMatrixB->col_num + b_value - 1) / b_value);
 #ifdef PROFILE
         time = timer.tick();
