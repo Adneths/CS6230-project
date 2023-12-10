@@ -5,6 +5,6 @@
 
 namespace cusparse
 {
-    Matrix<double> *spmm(CSRMatrix<double> *A, dense_mat<double> *B);
+    CSRMatrix<double> *spmm(CSRMatrix<double> *A, dense_mat<double> *B);
 }
 #endif
