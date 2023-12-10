@@ -2,7 +2,7 @@
 #SBATCH -A m4341
 #SBATCH -C gpu
 #SBATCH -q shared
-#SBATCH -t 0:05:00
+#SBATCH -t 0:10:00
 #SBATCH -n 1
 #SBATCH -c 32
 #SBATCH --gpus-per-task=1
@@ -47,13 +47,15 @@ for dataset in ${DATASETS[@]}; do
     SACC=$(echo $SACC+$(grep -Po "Cuda Result matches CuSparse Result" $RESULTS_PATH/sacc_$dataset.txt | wc -l) | bc)
 done
 
+rm -f $0.out
+echo ""  > $0.out
 if [[ $DACC -eq $LEN ]]; then
-    echo "All dense accumulator results match"
+    echo "All dense accumulator results match" >> $0.out
 else
-    echo "Not all dense accumulator results match"
+    echo "Not all dense accumulator results match" >> $0.out
 fi
 if [[ $SACC -eq $LEN ]]; then
-    echo "All sparse accumulator results match"
+    echo "All sparse accumulator results match" >> $0.out
 else
-    echo "Not all sparse accumulator results match"
+    echo "Not all sparse accumulator results match" >> $0.out
 fi

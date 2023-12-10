@@ -45,7 +45,7 @@ __device__ inline int decode(uint8_t rowcol) {
     return (rowcol>>4)*16 + (rowcol&0x0f);
 }
 
-__global__ void tile_spgemm_cuda(int S, int *tileRowPtrC, int *tileColIdxC, int len,
+__global__ void tile_spgemm_cuda(int S, int tileRowsC, int tileColsC,
     int* tileRowPtrA, int* tileColIdxA, int* tileNnzsA, uint8_t* rowPtrA, uint8_t* rowcolIdxA, double* valsA, uint16_t* masksA,
     int* tileColPtrB, int* tileRowIdxB, int* tileNnzsB, uint8_t* colPtrB, uint8_t* colrowIdxB, double* valsB, uint16_t* masksB,
     int* tileRowPtrC, int* tileColIdxC, int* tileNnzsC, uint8_t* rowPtrC, uint8_t* rowcolIdxC, double* valsC, uint16_t* masksC)
@@ -60,57 +60,81 @@ __global__ void tile_spgemm_cuda(int S, int *tileRowPtrC, int *tileColIdxC, int 
     int bx = blockIdx.x;
 
     // While tile-row is this tile-nnz in
-    int trow = binary_search_between(tileRowPtrC, 0, len, bx*S);
+    int trow = binary_search_between(tileRowPtrC, 0, tileRowsC, bx*S);
     for (int n = 0; n < S; i++) {
-        if (tx == 0 && ty == 0) {
-            int pos = 0;
-            int idC = bx*S+n;
-            // If outside of current row rebinary search starting at current tile-row
-            if (tileRowPtrC[trow+1] <= idC)
-                trow = binary_search_between(tileRowPtrC, trow, len, idC);
-            int tcol = tileColIdxC[idC];
+        int boundS = -2, boundE = -1;
+        while (boundS < boundE) {
+            if (tx == 0 && ty == 0) { // Sequential
+                int pos = 0;
+                int idC = bx*S+n;
+                // If outside of current row rebinary search starting at current tile-row
+                if (tileRowPtrC[trow+1] <= idC)
+                    trow = binary_search_between(tileRowPtrC, trow, len, idC);
+                int tcol = tileColIdxC[idC];
 
-            if (tileRowPtrA[trow+1] - tileRowPtrA[trow] < tileColPtrB[tcol+1] - tileColPtrB[tcol]) {
-                for (int i = tileRowPtrA[trow]; i < tileRowPtrA[trow+1]; i++) {
-                    int match = 
-                        binary_search(tileRowIdxB, tileRowIdxB[tileColPtrB[tcol]], tileRowIdxB[tileColPtrB[tcol]+1], tileColIdxA[i]);
-                    if (match != -1) {
-                        matchA[pos] = i;
-                        matchB[pos] = match;
-                        atomicAdd(&pos, 1);
+                if (tileRowPtrA[trow+1] - tileRowPtrA[trow] < tileColPtrB[tcol+1] - tileColPtrB[tcol]) {
+                    if (boundS < 0) boundS = tileRowPtrA[trow];
+                    if (boundE < 0) boundE = tileRowPtrA[trow+1];
+                    for (int i = boundS; i < boundE; i++) {
+                        int match = 
+                            binary_search(tileRowIdxB, tileRowIdxB[tileColPtrB[tcol]], tileRowIdxB[tileColPtrB[tcol]+1], tileColIdxA[i]);
+                        if (match != -1) {
+                            matchA[pos] = i;
+                            matchB[pos] = match;
+                            //atomicAdd(&pos, 1);
+                            if (++pos >= 1024) break; 
+                        }
                     }
                 }
-            }
-            else {
-                for (int i = tileColPtrB[tcol]; i < tileColPtrB[tcol+1]; i++) {
-                    int match = 
-                        binary_search(tileColIdxA, tileColIdxA[tileRowPtrA[trow]], tileColIdxA[tileRowPtrA[trow]+1], tileRowIdxB[i]);
-                    if (match != -1) {
-                        matchA[pos] = match;
-                        matchB[pos] = i;
-                        atomicAdd(&pos, 1);
+                else {
+                    if (boundS < 0) boundS = tileColPtrB[tcol];
+                    if (boundE < 0) boundE = tileColPtrB[tcol+1];
+                    for (int i = boundS; i < boundE; i++) {
+                        int match = 
+                            binary_search(tileColIdxA, tileColIdxA[tileRowPtrA[trow]], tileColIdxA[tileRowPtrA[trow]+1], tileRowIdxB[i]);
+                        if (match != -1) {
+                            matchA[pos] = match;
+                            matchB[pos] = i;
+                            //atomicAdd(&pos, 1);
+                            if (++pos >= 1024) break;
+                        }
                     }
+                }
+                boundS += pos;
+            }
+            __syncthreads();
+
+            int id = ty*16+tx;
+            denseC[id] = 0;
+            for (int i = 0; i < pos; i++) {
+                denseA[id] = 0; denseBT[id] = 0;
+                int s = rowPtrA[matchA[i]]; int e = tileNnzsA[matchA[i]+1];
+                if (id+s < e)
+                    denseA[decode(rowcolIdxA[id+s])] = valsA[id+s];
+                s = colPtrB[matchA[i]]; e = tileNnzsB[matchA[i]+1];
+                if (id+s < e)
+                    denseB[decode(colrowIdxB[id+s])] = valsB[id+s];
+
+                for (int j = 0; j < 16; j++) {
+                    denseC[id] += denseA[ty*16+j] * denseBT[tx*16+j];
                 }
             }
         }
-        // Mask?
+    }
+}
 
-        int id = ty*16+tx;
-        denseC[id] = 0;
-        for (int i = 0; i < pos; i++) {
-            denseA[id] = 0; denseBT[id] = 0;
-            int s = rowPtrA[matchA[i]]; int e = tileNnzsA[matchA[i]+1];
-            if (id+s < e)
-                denseA[decode(rowcolIdxA[id+s])] = valsA[id+s];
-            s = colPtrB[matchA[i]]; e = tileNnzsB[matchA[i]+1];
-            if (id+s < e)
-                denseB[decode(colrowIdxB[id+s])] = valsB[id+s];
+__global__ void transposeMasks(uint16_t* masks, int len) {
+    extern __shared__ int mask[];
+    int tx = threadIdx.x; int bx = blockIdx.x; int id = bx * blockDim.x + tx;
+    if (id < len) {
+        mask[tx] = masks[id];
 
-            for (int j = 0; j < 16; j++) {
-                denseC[id] += denseA[ty*16+j] * denseBT[tx*16+j];
-            }
+        uint16_t m = 0; int tile = tx / 16; uint16_t extract = 1 << (15 - (tx%16));
+    #pragma unroll
+        for (int i = 0; i < 16; i++) {
+            m |= ((mask[tile+i] & extract) != 0) << (15-i);
         }
-        
+        masks[id] = m;
     }
 }
 
@@ -147,25 +171,39 @@ CSRMatrix<double>* tile_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     cudaMalloc((void**)      &dvalsB, tileB->vals.size() * sizeof(double)      );
     cudaMalloc((void**)     &dmasksB, tileB->masks.size() * sizeof(uint16_t)   );
 
-    cudaMemcpy(&dtileRowPtrA, tileA->tileRowPtr.data(), tileA->tileRowPtr.size() * sizeof(int)   , cudaMemcpyHostToDevice);
-    //cudaMemcpy(&dtileRowIdxA, tileA->tileRowIdx.data(), tileA->tileColIdx.size() * sizeof(int)   , cudaMemcpyHostToDevice);
-    cudaMemcpy(&dtileColIdxA, tileA->tileColIdx.data(), tileA->tileColIdx.size() * sizeof(int)   , cudaMemcpyHostToDevice);
-    cudaMemcpy(  &dtileNnzsA, tileA->tileNnzs  .data(), tileA->tileNnzs.size() * sizeof(int)     , cudaMemcpyHostToDevice);
-    cudaMemcpy(    &drowPtrA, tileA->rowPtr    .data(), tileA->rowPtr.size() * sizeof(uint8_t)   , cudaMemcpyHostToDevice);
-    cudaMemcpy( &drowcolIdxA, tileA->rowcolIdx .data(), tileA->rowcolIdx.size() * sizeof(uint8_t), cudaMemcpyHostToDevice);
-    cudaMemcpy(      &dvalsA, tileA->vals      .data(), tileA->vals.size() * sizeof(double)      , cudaMemcpyHostToDevice);
-    cudaMemcpy(     &dmasksA, tileA->masks     .data(), tileA->masks.size() * sizeof(uint16_t)   , cudaMemcpyHostToDevice);
+    cudaMemcpy(dtileRowPtrA, tileA->tileRowPtr.data(), tileA->tileRowPtr.size() * sizeof(int)   , cudaMemcpyHostToDevice);
+    //cudaMemcpy(dtileRowIdxA, tileA->tileRowIdx.data(), tileA->tileColIdx.size() * sizeof(int)   , cudaMemcpyHostToDevice);
+    cudaMemcpy(dtileColIdxA, tileA->tileColIdx.data(), tileA->tileColIdx.size() * sizeof(int)   , cudaMemcpyHostToDevice);
+    cudaMemcpy(  dtileNnzsA, tileA->tileNnzs  .data(), tileA->tileNnzs.size() * sizeof(int)     , cudaMemcpyHostToDevice);
+    cudaMemcpy(    drowPtrA, tileA->rowPtr    .data(), tileA->rowPtr.size() * sizeof(uint8_t)   , cudaMemcpyHostToDevice);
+    cudaMemcpy( drowcolIdxA, tileA->rowcolIdx .data(), tileA->rowcolIdx.size() * sizeof(uint8_t), cudaMemcpyHostToDevice);
+    cudaMemcpy(      dvalsA, tileA->vals      .data(), tileA->vals.size() * sizeof(double)      , cudaMemcpyHostToDevice);
+    cudaMemcpy(     dmasksA, tileA->masks     .data(), tileA->masks.size() * sizeof(uint16_t)   , cudaMemcpyHostToDevice);
 
-    cudaMemcpy(&dtileRowPtrB, tileB->tileRowPtr.data(), tileB->tileRowPtr.size() * sizeof(int)   , cudaMemcpyHostToDevice);
-    //cudaMemcpy(&dtileRowIdxB, tileB->tileRowIdx.data(), tileB->tileColIdx.size() * sizeof(int)   , cudaMemcpyHostToDevice);
-    cudaMemcpy(&dtileColIdxB, tileB->tileColIdx.data(), tileB->tileColIdx.size() * sizeof(int)   , cudaMemcpyHostToDevice);
-    cudaMemcpy(  &dtileNnzsB, tileB->tileNnzs  .data(), tileB->tileNnzs.size() * sizeof(int)     , cudaMemcpyHostToDevice);
-    cudaMemcpy(    &drowPtrB, tileB->rowPtr    .data(), tileB->rowPtr.size() * sizeof(uint8_t)   , cudaMemcpyHostToDevice);
-    cudaMemcpy( &drowcolIdxB, tileB->rowcolIdx .data(), tileB->rowcolIdx.size() * sizeof(uint8_t), cudaMemcpyHostToDevice);
-    cudaMemcpy(      &dvalsB, tileB->vals      .data(), tileB->vals.size() * sizeof(double)      , cudaMemcpyHostToDevice);
-    cudaMemcpy(     &dmasksB, tileB->masks     .data(), tileB->masks.size() * sizeof(uint16_t)   , cudaMemcpyHostToDevice);
+    cudaMemcpy(dtileRowPtrB, tileB->tileRowPtr.data(), tileB->tileRowPtr.size() * sizeof(int)   , cudaMemcpyHostToDevice);
+    //cudaMemcpy(dtileRowIdxB, tileB->tileRowIdx.data(), tileB->tileColIdx.size() * sizeof(int)   , cudaMemcpyHostToDevice);
+    cudaMemcpy(dtileColIdxB, tileB->tileColIdx.data(), tileB->tileColIdx.size() * sizeof(int)   , cudaMemcpyHostToDevice);
+    cudaMemcpy(  dtileNnzsB, tileB->tileNnzs  .data(), tileB->tileNnzs.size() * sizeof(int)     , cudaMemcpyHostToDevice);
+    cudaMemcpy(    drowPtrB, tileB->rowPtr    .data(), tileB->rowPtr.size() * sizeof(uint8_t)   , cudaMemcpyHostToDevice);
+    cudaMemcpy( drowcolIdxB, tileB->rowcolIdx .data(), tileB->rowcolIdx.size() * sizeof(uint8_t), cudaMemcpyHostToDevice);
+    cudaMemcpy(      dvalsB, tileB->vals      .data(), tileB->vals.size() * sizeof(double)      , cudaMemcpyHostToDevice);
+    tileB->masks = {0b0100000000000000, 0b0010000000000000, 0b0001000000000000, 0b0000100000000000,
+                    0b0000010000000000, 0b0000001000000000, 0b0000000100000000, 0b0000000010000000,
+                    0b0000000001000000, 0b0000000000100000, 0b0000000000010000, 0b0000000000001000,
+                    0b0000000000000100, 0b0000000000000010, 0b0000000000000001, 0b1000000000000000};
+    cudaMemcpy(dmasksB, tileB->masks.data(), tileB->masks.size() * sizeof(uint16_t), cudaMemcpyHostToDevice);
+    for (int i = 0; i < 16; i++)
+        printf("%d\n", tileB->masks[i]);
+        
+    dim3 threadPerBlock(std::min(32*((tileB->masks.size()+31)/32), 1024));
+    dim3 blocks((tileB->masks.size()+threadPerBlock.x-1)/threadPerBlock.x);
+    transposeMasks<<<blocks,threadsPerBlock, threadPerBlock.x*sizeof(uint16_t)>>>(dmasksB, tileB->masks.size());
+    cudaMemcpy(tileB->masks.data(), dmasksB, tileB->masks.size() * sizeof(uint16_t), cudaMemcpyDeviceToHost);
+    for (int i = 0; i < 16; i++)
+        printf("%d\n", tileB->masks[i]);
+    return nullptr;
 
-    int *dtileRowPtrC, *dtileColIdxC;
+    /*int *dtileRowPtrC, *dtileColIdxC;
     int64_t C_nnz;
     _spgemm_symbolic(tileA->tileRows, tileA->tileCols, tileA->tileNnz,
                      tileB->tileRows, tileB->tileCols, tileB->tileNnz,
@@ -173,11 +211,11 @@ CSRMatrix<double>* tile_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
                      &dtileRowPtrC, &dtileColIdxC, &C_nnz);
     
     const int S = 4;
-    dim3 threadPerBlock(16,16,1);
-    dim3 blocks((C_nnz+S-1)/S);
+    threadPerBlock = dim3(16,16,1);
+    blocks = dim3((C_nnz+S-1)/S);
     <<<blocks,threadsPerBlock>>>
 
-    return nullptr;
+    return nullptr;*/
 }
 
 }

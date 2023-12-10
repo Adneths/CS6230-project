@@ -6,7 +6,7 @@
 #SBATCH -N 1
 #SBATCH --ntasks-per-node=1
 #SBATCH -c 32
-#SBATCH --gpus-per-task=2
+#SBATCH --gpus-per-task=8
 #SBATCH --gpu-bind=none
 
 export SLURM_CPU_BIND="cores"

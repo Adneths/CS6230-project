@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
         printf("Usage: ./<program> <harwell-boeing-file> <algorithm:0>");
         printf("Algorithm: 0 - Full Dense Accumulator");
         printf("         : 1 - Full Sparse Accumulator");
-        printf("         : 2 - Tiled SpGEMM (Non Functional)");
+        printf("         : 2 - Tiled SpGEMM (Not avaliable)");
         return 1;
     }
     int type = 0;
@@ -115,7 +115,7 @@ int main(int argc, char **argv) {
     }
 
     if (type == 2) {
-        printf("Type %d is currently not functional\n", type);
+        printf("Type %d is currently not avaliable\n", type);
         return 1;
     }
 
@@ -123,10 +123,9 @@ int main(int argc, char **argv) {
     switch(type) {
         case 0: algName = "Full Dense Accumulator"; break;
         case 1: algName = "Full Sparse Accumulator"; break;
-        case 2: algName = "Tiled SpGEMM"; break;
+        //case 2: algName = "Tiled SpGEMM"; break;
         default: algName = ""; break;
     }
-
 
     const char *const filename = argv[1];
     enum sparse_matrix_file_format_t file_format = sparse_matrix_file_format_t::HARWELL_BOEING;
@@ -136,23 +135,6 @@ int main(int argc, char **argv) {
     printf("%s: ", argv[1]);
     struct csr_matrix_t* csr_mat = csc_to_csr((struct csc_matrix_t*)spm->repr);
     CSRMatrix<double>* matrix = new CSRMatrix<double>(csr_mat);
-//*/
-    /*  
-    std::vector<int> rowPtr = {0,2,4,5,6},
-    dataCol = {0,3,1,2,1,0};
-    std::vector<double> dataVal = {1,1,2,2,2,1};
-    //std::vector<double> dataVal = {1,1,2,2,-2,-1};
-    CSRMatrix<double>* matrix = new CSRMatrix<double>(4, 4, rowPtr.data(), dataCol.data(), dataVal.data(), 6);*/
-    /*
-    std::vector<int> rowPtr(1101), dataCol(1100);
-    std::vector<double> dataVal(1100);
-    rowPtr[0] = 0;
-    for(int i = 0; i < 1100; i++) {
-        rowPtr[i+1] = 1100;
-        dataCol[i] = i;
-        dataVal[i] = i+1;
-    }
-    CSRMatrix<double>* matrix = new CSRMatrix<double>(1100, 1100, rowPtr.data(), dataCol.data(), dataVal.data(), 1100);*/
     matrix->info();
     CSRMatrix<double> *result_cuda, *result_cusparse;
     printf("Algorithm: %s on ", algName.c_str());
