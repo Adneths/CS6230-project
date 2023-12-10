@@ -99,9 +99,34 @@ std::ostream& operator<<(std::ostream& stream, struct csr_matrix_t* mat) {
 int main(int argc, char **argv) {
 ///*
     if (argc < 2) {
-        printf("Usage: ./<program> <harwell-boeing-file>");
+        printf("Usage: ./<program> <harwell-boeing-file> <algorithm:0>");
+        printf("Algorithm: 0 - Full Dense Accumulator");
+        printf("         : 1 - Full Sparse Accumulator");
+        printf("         : 2 - Tiled SpGEMM (Non Functional)");
         return 1;
     }
+    int type = 0;
+    if (argc >= 3) {
+        type = atoi(argv[2]);
+    }
+    if (type > 2 || type < 0) {
+        printf("Type %d not supported, the range is [0,2]\n", type);
+        return 1;
+    }
+
+    if (type == 2) {
+        printf("Type %d is currently not functional\n", type);
+        return 1;
+    }
+
+    std::string algName;
+    switch(type) {
+        case 0: algName = "Full Dense Accumulator"; break;
+        case 1: algName = "Full Sparse Accumulator"; break;
+        case 2: algName = "Tiled SpGEMM"; break;
+        default: algName = ""; break;
+    }
+
 
     const char *const filename = argv[1];
     enum sparse_matrix_file_format_t file_format = sparse_matrix_file_format_t::HARWELL_BOEING;
@@ -110,13 +135,13 @@ int main(int argc, char **argv) {
         return 1;
     printf("%s: ", argv[1]);
     struct csr_matrix_t* csr_mat = csc_to_csr((struct csc_matrix_t*)spm->repr);
-    //CSRMatrix<double>* matrix = new CSRMatrix<double>(csr_mat);
+    CSRMatrix<double>* matrix = new CSRMatrix<double>(csr_mat);
 //*/
-    
-    std::vector<int> rowPtr = {0,3,5,6,9},
-    dataCol = {0,2,3,  1,2,  3,  0,1,2};
-    std::vector<double> dataVal = {1,3,4,  6,7,  12,  13,14,15};
-    CSRMatrix<double>* matrix = new CSRMatrix<double>(4, 4, rowPtr.data(), dataCol.data(), dataVal.data(), 9);
+    /*  
+    std::vector<int> rowPtr = {0,2,4,5,6},
+    dataCol = {0,3,1,2,1,0};
+    std::vector<double> dataVal = {1,1,2,2,-2,-1};
+    CSRMatrix<double>* matrix = new CSRMatrix<double>(4, 4, rowPtr.data(), dataCol.data(), dataVal.data(), 6);*/
     /*
     std::vector<int> rowPtr(1101), dataCol(1100);
     std::vector<double> dataVal(1100);
@@ -129,20 +154,23 @@ int main(int argc, char **argv) {
     CSRMatrix<double>* matrix = new CSRMatrix<double>(1100, 1100, rowPtr.data(), dataCol.data(), dataVal.data(), 1100);*/
     matrix->info();
     CSRMatrix<double> *result_cuda, *result_cusparse;
-    result_cuda = cuda::sacc_spgemm(matrix, matrix);
+    switch(type) {
+        case 0: result_cuda = cuda::dacc_spgemm(matrix, matrix); break;
+        case 1: result_cuda = cuda::sacc_spgemm(matrix, matrix); break;
+        case 2: result_cuda = nullptr; break;
+        default: result_cuda = nullptr; break;
+    }
     result_cusparse = cusparse::spgemm(matrix, matrix);
-    std::cout << result_cuda << std::endl;
-    std::cout << result_cusparse << std::endl;
-    /*
-    printf("Cuda Results: ");
-    if (result_cuda) result_cuda->info(); else printf("nullptr\n");
-    printf("CuSparse Results: ");
-    if (result_cusparse) result_cusparse->info(); else printf("nullptr\n");
+    if (type == 0) result_cusparse->resparse();
+
+    printf("Algorithm: %s\n", algName.c_str());
+    printf("Cuda Results: "); if (result_cuda) result_cuda->info(); else printf("nullptr\n");
+    printf("CuSparse Results: "); if (result_cusparse) result_cusparse->info(); else printf("nullptr\n");
     if (compare(result_cuda, result_cusparse))
         printf("Cuda Result matches CuSparse Result\n");
     else
         printf("Cuda Result does not match CuSparse Result\n");
-    */
+        
     delete matrix;
     delete result_cuda;
     delete result_cusparse;

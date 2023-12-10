@@ -133,6 +133,34 @@ struct CSRMatrix {
         for (int i = rows; i > 0; i--)
             numRows[i] = numRows[i-1];
         numRows[0] = 0;
+
+        this->replace(nnz, numRows, nDataCol, nDataVal);
+    }
+    void resparse() {
+        int nnnz = 0;
+        for (int i = 0; i < nnz; i++)
+            if (dataVal[i] != 0)
+                nnnz++;
+        int* nRowPtr = (int*)malloc((rows+1) * sizeof(int));
+        int* nDataCol = (int*)malloc(nnnz * sizeof(int));
+        double* nDataVal = (double*)malloc(nnnz * sizeof(double));
+        
+        nnnz = 0;
+        for (int i = 0; i < rows; i++){
+            nRowPtr[i] = nnnz;
+            for (int j = rowPtr[i]; j < rowPtr[i+1]; j++) {
+                if (dataVal[j] != 0)
+                {
+                    nDataCol[nnnz] = dataCol[j];
+                    nDataVal[nnnz] = dataVal[j];
+                    nnnz++;
+                }
+            }
+        }
+        nRowPtr[rows] = nnnz;
+        this->replace(nnnz, nRowPtr, nDataCol, nDataVal);
+    }
+    void replace(int nnnz, int* nRowPtr, int* nDataCol, double* nDataVal) {
         if (src != nullptr) {
             if (src->value_type == value_type_t::PATTERN)
                 free(dataVal);
@@ -143,9 +171,10 @@ struct CSRMatrix {
             free(this->dataCol);
             free(this->dataVal);
         }
-        this->rowPtr = numRows;
+        this->rowPtr = nRowPtr;
         this->dataCol = nDataCol;
         this->dataVal = nDataVal;
+        this->nnz = nnnz;
     }
     void info() {
         printf("%dx%d (%d)\n", rows, cols, nnz);

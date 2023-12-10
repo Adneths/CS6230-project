@@ -14,6 +14,7 @@ LIB_PATHS += -L$(CUDA_MATH_LIB) -lcusparse -lnvToolsExt
 LDFLAGS += $(LIB_PATHS)
 CXXFLAGS += $(INCLUDE_PATHS)
 NVCCFLAGS += $(INCLUDE_PATHS)
+NVCCFLAGS += -arch=sm_61
 
 INCLUDE_PATH = include
 SRC_PATH = src

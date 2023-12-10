@@ -217,48 +217,51 @@ __global__ void spgemm_sacc(int rowsA, int colsA, int* rowPtrA, int* colIdxA, do
                 sBlock[index + stride] += sBlock[index];
             __syncthreads();
         }
-        //for (int j = 0; j < 0; j++) { // TODO
         int ind = 0;
         if (i < maskCols) {
 #pragma unroll
             for (int k = 0; k < 64; k++) {
-                if (mask & (1 << (63-k)) != 0) {
+                if ((mask & (1ull << (63-k))) != 0ull) {
                     colIdxC[start + runningSum + sBlock[tx] + (ind++)] = i * 64 + k;
-                    printf("%d:%d\n", bx, start + runningSum + sBlock[tx]);
                 }
             }
         }
-        //}
         //if (tx == 0) printf("%d:%d %d\n", bx, uint32_t(mask >> 32), uint32_t(mask & 0xffffffff));
         runningSum += sBlock[blockDim.x-1];
     }
-    /*
+    __syncthreads();
+    
+    //if (tx == 0) { for (tx = 0; tx < blockDim.x; tx++) {
     if (tx < colsB) {
-        int as = rowPtrA[bx]; int ae = rowPtrA[bx+1];
-        for (int i = as; i < ae; i++) {
+        for (int i = rowPtrA[bx]; i < rowPtrA[bx+1]; i++) {
             double valA = valsA[i]; int c = colIdxA[i];
 
             int bs = rowPtrB[c]; int be = rowPtrB[c+1];
+            int cs = rowPtrC[bx]; int ce = rowPtrC[bx+1];
             while (bs < be) {
                 if (bs + tx < be) { // Prevent over reading of B
-                    //valsC[bx * colsB + colIdxB[bs + tx]] += valA * valsB[bs + tx];
                     int colB = colIdxB[bs + tx];
-                    int cs = rowPtrC[c]; int ce = rowPtrC[c+1]; int cm = (cs+ce)/2;
-                    while (cs < ce) {
+                    int ss = cs; int se = ce;
+                    while (ss < se) {
+                        int cm = (ss+se)/2;
                         if (colIdxC[cm] == colB) {
-                            valsC[cm] += valA * valsB[bs + tx];
+                            atomicAdd(valsC+cm, valA * valsB[bs + tx]);
+                            //valsC[cm] += valA * valsB[bs + tx];
+                            //printf("(%d,%d) (%.3f x (%d) -> %.3f) -> %d\n", c, colB, valA, bs + tx, valsB[bs + tx], cm);
+                            break;
                         }
                         else if (colIdxC[cm] < colB)
-                            cs = cm+1;
+                            ss = cm+1;
                         else
-                            ce = cm;
+                            se = cm;
                     }
                 }
                 bs += blockDim.x;
             }
             __syncthreads();
         }
-    }*/
+    }
+    //}}
 }
 
 CSRMatrix<double>* sacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
@@ -270,6 +273,7 @@ CSRMatrix<double>* sacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     int *d_rowPtrA, *d_colIdxA, *d_rowPtrB, *d_colIdxB, *d_rowPtrC;
     double *d_valsA, *d_valsB;
     int* d_maxRow; int maxRow;
+    int nnzC;
 
     size_t
     rowPtrA_size  = (A->rows+1) * sizeof(int),
@@ -320,36 +324,12 @@ CSRMatrix<double>* sacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     sacc_spgemm_preprocess<<<numBlocks,threadsPerBlock>>>(B->rows, B->cols, d_rowPtrB, d_colIdxB, d_maskB, d_maxRow);
     cudaMemcpy(&maxRow, d_maxRow, sizeof(int), cudaMemcpyDeviceToHost);
 
-    threadsPerBlock = dim3(std::min(32*((((B->cols+63)/64)+31)/32),1024)); // ceil( ceil(colsB/64) / 32)
+    threadsPerBlock = dim3(std::min(32*((((B->cols+63)/64)+31)/32),1024)); // equlvalent to ceil( ceil(colsB/64) / 32)
     numBlocks = dim3(A->rows);
-    //printf("(%d,%d,%d)\n", numBlocks.x, numBlocks.y, numBlocks.z);
-    //printf("(%d,%d,%d)\n", threadsPerBlock.x, threadsPerBlock.y, threadsPerBlock.z);
     sacc_spgemm_structureC<<<numBlocks,threadsPerBlock>>>(d_rowPtrA, d_colIdxA, B->cols, d_maskB, d_maskC, d_rowPtrC);
 
-    /*uint64_t* temp = (uint64_t*)malloc(maskC_size);
-    cudaMemcpy(temp, d_maskB, maskC_size, cudaMemcpyDeviceToHost);
-    printf("maskB: ");
-    for (int i = 0; i < (A->rows) * ((B->cols+63)/64); i++)
-        std::cout << temp[i] << ", ";
-    printf("\n");
-    cudaMemcpy(temp, d_maskC, maskC_size, cudaMemcpyDeviceToHost);
-    printf("maskC: ");
-    for (int i = 0; i < (A->rows) * ((B->cols+63)/64); i++)
-        std::cout << temp[i] << ", ";
-    printf("\n");
-    int* temp1 = (int*)malloc(rowPtrC_size);
-    cudaMemcpy(temp1, d_rowPtrC, rowPtrC_size, cudaMemcpyDeviceToHost);
-    printf("rowSizeC: ");
-    for (int i = 0; i < A->rows+1; i++)
-        printf("%d, ", temp1[i]);
-    printf("\n");
-    free(temp);
-    free(temp1);*/
-
     cumsumI(d_rowPtrC, d_rowPtrC, A->rows+1);
-    int nnzC;
     cudaMemcpy(&nnzC, d_rowPtrC+A->rows, sizeof(int), cudaMemcpyDeviceToHost);
-    //printf("NNZ=%d\n", nnzC);
 #ifdef PROFILE
     nvtxRangePushA("CUDA_spgemm_preprocess_cudamalloc");
 #endif
