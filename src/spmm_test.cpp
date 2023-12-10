@@ -128,6 +128,7 @@ int main(int argc, char **argv)
     if (spm == NULL)
         return 1;
     printf("%s: ", argv[1]);
+    ((struct csc_matrix_t *)(spm->repr))->symmetry_type = UNSYMMETRIC;
     struct csr_matrix_t *csr_mat = csc_to_csr((struct csc_matrix_t *)spm->repr);
     CSRMatrix<double> *matrix = new CSRMatrix<double>(csr_mat);
 
@@ -182,7 +183,7 @@ int main(int argc, char **argv)
     std::cout << "SPMM using cuda-time record*********************\n";
     spmm_result_cuda = cuda::spmm(matrix, dense_matrix);
     std::cout << "SPMM using GCOO-time record*********************\n";
-    std::cout << "SPMM GCOO Hypter-parameter choosing:p=" << p_value << "b=" << b_value;
+    std::cout << "SPMM GCOO Hypter-parameter choosing:p=" << p_value << ", b=" << b_value << "\n";
     spmm_result_gcoo = GCOOSPMM::spmm(gcoo_spm, dense_matrix);
     printf("\n");
     // spmm_result_cusparse = cusparse::spmv(matrix, dense_vector);
