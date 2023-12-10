@@ -58,4 +58,5 @@ Usage: ./spmspv <harwell-boeing-file>
 
 ## Notes
 
-- Bebop library has a maximum size on the input it could read which is approximately (???)
+- Bebop library has a maximum size on the input it could read which is approximately $80k \times 80k$
+- Bebop library automatically sets the symmetric_type of loaded matrix as *sypmmetric(1)*, which causes mistakes in the csc_to_csr() function. Mannually set the symmetric_type  as *unsymmetric*, or the csc_to_csr() function just assign the pointers to the counterparts (so that you get a transposed matrix of the original)
