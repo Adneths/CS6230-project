@@ -67,6 +67,7 @@ const int num_colors = sizeof(colors)/sizeof(uint32_t);
 namespace cusparse {
 
 CSRMatrix<double>* spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
+    cudaSetDevice(0);
 //#ifdef PROFILE
     NAME_THREAD("MAIN_THREAD");
     PUSH_RANGE("CuSparse_spgemm", BLACK);
