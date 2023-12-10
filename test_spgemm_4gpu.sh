@@ -34,7 +34,7 @@ run() {
     srun ./spgemm data/$1/$1.rb $2 > $RESULTS_PATH/$3$1.txt
 }
 
-RESULTS_PATH='results/1gpu'
+RESULTS_PATH='results/4gpu'
 mkdir -p $RESULTS_PATH
 DATASETS=$(ls ./data | grep -Po "^[a-zA-Z0-9\_\-]+" | sort | uniq | grep -P "$FILTER" | grep -v "_toobig")
 LEN=$(echo ${DATASETS[@]} | wc -w)
