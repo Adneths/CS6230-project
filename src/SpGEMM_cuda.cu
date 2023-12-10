@@ -22,37 +22,82 @@ __global__ void dacc_spgemm_preprocess(int* maxRow, int* rowPtr, int len) {
 }
 
 // Sparse General Matrix Multiplication with Dense Accumulator
-__global__ void spgemm_dacc(int rowsA, int colsA, int* rowPtrA, int* colIdxA, double* valsA,
+__global__ void spgemm_dacc(int partOffset, int rowsA, int colsA, int* rowPtrA, int* colIdxA, double* valsA,
                         int rowsB, int colsB, int* rowPtrB, int* colIdxB, double* valsB,
                         double* valsC) {
     int tx = threadIdx.x;
     int bx = blockIdx.x;
     if (tx < colsB) {
-        int as = rowPtrA[bx]; int ae = rowPtrA[bx+1];
-        for (int i = as; i < ae; i++) {
+        for (int i = rowPtrA[partOffset+bx]; i < rowPtrA[partOffset+bx+1]; i++) {
             double valA = valsA[i]; int c = colIdxA[i];
 
             int bs = rowPtrB[c]; int be = rowPtrB[c+1];
             while (bs < be) {
                 if (bs + tx < be) { // Prevent over reading of B
-                    valsC[bx * colsB + colIdxB[bs + tx]] += valA * valsB[bs + tx];
+                    atomicAdd(&valsC[bx * colsB + colIdxB[bs + tx]], valA * valsB[bs + tx]);
                 }
                 bs += blockDim.x;
             }
-            __syncthreads();
         }
     }
 }
 
+int check(int rows, int* rowPtr, int partSize) {
+    int prev = 0; int n = 0;
+    for (int i = 1; i < rows+1; i++) {
+        if (rowPtr[i] > partSize + prev) {
+            prev = rowPtr[i-1];
+            n++;
+        }
+    }
+    return n+1;
+}
+void partitionRows(int rows, int* rowPtr, int* partitionInd, int N) {
+    if (N < 2) {
+        partitionInd[0] = rows;
+        return;
+    }
+    int s = 0; int e = rowPtr[rows]; int best = 0;
+    while (s < e) {
+        int m = (s+e)/2;
+        int part = check(rows, rowPtr, m);
+        if (part == N) {
+            best = m;
+            e = m;
+        }
+        else if (part < N)
+            e = m;
+        else
+            s = m+1;
+    }
+
+    int prev = 0; int n = 0;
+    for (int i = 1; i < rows+1; i++) {
+        if (rowPtr[i] > best + prev) {
+            prev = rowPtr[i-1];
+            partitionInd[n++] = i-1;
+        }
+    }
+    partitionInd[n] = rows;
+}
+
 CSRMatrix<double>* dacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
+    int deviceCount = 0;
+    cudaGetDeviceCount(&deviceCount);
+    printf("%d GPU%s\n", deviceCount, deviceCount > 1 ? "s": "");
+    if (deviceCount == 0)
+        return nullptr;
 #ifdef PROFILE
     nvtxNameOsThread(pthread_self(), "MAIN_THREAD");
     nvtxRangePushA("CUDA_spgemm");
     nvtxRangePushA("CUDA_spgemm_cudamalloc");
 #endif
-    int *d_rowPtrA, *d_colIdxA, *d_rowPtrB, *d_colIdxB;
-    double *d_valsA, *d_valsB, *d_valsC, *h_valsC;
+    int *d_rowPtrA[MAX_GPU], *d_colIdxA[MAX_GPU], *d_rowPtrB[MAX_GPU], *d_colIdxB[MAX_GPU];
+    double *d_valsA[MAX_GPU], *d_valsB[MAX_GPU], *d_valsC[MAX_GPU], *h_valsC;
     int* d_maxRow; int maxRow;
+
+    int partition[MAX_GPU+1]; partition[0] = 0;
+    partitionRows(A->rows, A->rowPtr, partition+1, deviceCount);
 
     size_t
     rowPtrA_size  = (A->rows+1) * sizeof(int),
@@ -60,60 +105,80 @@ CSRMatrix<double>* dacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     valsA_size = (A->nnz) * sizeof(double),
     rowPtrB_size  = (B->rows+1) * sizeof(int),
     colIdxB_size = (B->nnz) * sizeof(int),
-    valsB_size = (B->nnz) * sizeof(double),
-    valsC_size = (A->rows * B->cols) * sizeof(double);
+    valsB_size = (B->nnz) * sizeof(double);
+    size_t valsC_sizes[MAX_GPU];
 
-    cudaMalloc(&d_rowPtrA , rowPtrA_size );
-    cudaMalloc(&d_colIdxA, colIdxA_size);
-    cudaMalloc(&d_valsA, valsA_size);
-    cudaMalloc(&d_rowPtrB , rowPtrB_size );
-    cudaMalloc(&d_colIdxB, colIdxB_size);
-    cudaMalloc(&d_valsB, valsB_size);
-    cudaMalloc(&d_valsC, valsC_size);
+    cudaSetDevice(0);
     cudaMalloc(&d_maxRow, sizeof(int));
+    for (int d = 0; d < deviceCount; d++) {
+        cudaSetDevice(d);
+        cudaMalloc(&d_rowPtrA[d], rowPtrA_size);
+        cudaMalloc(&d_colIdxA[d], colIdxA_size);
+        cudaMalloc(&d_valsA[d], valsA_size);
+        cudaMalloc(&d_rowPtrB[d], rowPtrB_size);
+        cudaMalloc(&d_colIdxB[d], colIdxB_size);
+        cudaMalloc(&d_valsB[d], valsB_size);
+
+        valsC_sizes[d] = ((partition[d+1]-partition[d]) * B->cols) * sizeof(double);
+        cudaMalloc(&d_valsC[d], valsC_sizes[d]);
+    }
 
 #ifdef PROFILE
     nvtxRangePop();
     nvtxRangePushA("CUDA_spgemm_HtoD");
 #endif
-    cudaMemcpy(d_rowPtrA , A->rowPtr , rowPtrA_size , cudaMemcpyHostToDevice);
-    cudaMemcpy(d_colIdxA, A->dataCol, colIdxA_size, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_valsA, A->dataVal, valsA_size, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_rowPtrB , B->rowPtr , rowPtrB_size , cudaMemcpyHostToDevice);
-    cudaMemcpy(d_colIdxB, B->dataCol, colIdxB_size, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_valsB, B->dataVal, valsB_size, cudaMemcpyHostToDevice);
-    cudaMemset(d_valsC, 0, valsC_size);
+    cudaSetDevice(0);
     cudaMemset(d_maxRow, 0, sizeof(int));
+    for (int d = 0; d < deviceCount; d++) {
+        cudaSetDevice(d);
+        cudaMemcpy(d_rowPtrA[d], A->rowPtr , rowPtrA_size , cudaMemcpyHostToDevice);
+        cudaMemcpy(d_colIdxA[d], A->dataCol, colIdxA_size, cudaMemcpyHostToDevice);
+        cudaMemcpy(d_valsA[d], A->dataVal, valsA_size, cudaMemcpyHostToDevice);
+        cudaMemcpy(d_rowPtrB[d], B->rowPtr , rowPtrB_size , cudaMemcpyHostToDevice);
+        cudaMemcpy(d_colIdxB[d], B->dataCol, colIdxB_size, cudaMemcpyHostToDevice);
+        cudaMemcpy(d_valsB[d], B->dataVal, valsB_size, cudaMemcpyHostToDevice);
+        cudaMemset(d_valsC[d], 0, valsC_sizes[d]);
+    }
     
 #ifdef PROFILE
     nvtxRangePop();
     nvtxRangePushA("CUDA_spgemm_preprocess");
 #endif
 
+    cudaSetDevice(0);
     dim3 threadsPerBlock(std::min(32*((B->rows+31)/32),1024));
     dim3 numBlocks((B->rows+threadsPerBlock.x-1)/threadsPerBlock.x);
-    dacc_spgemm_preprocess<<<numBlocks,threadsPerBlock>>>(d_maxRow, d_rowPtrB, B->rows+1);
+    dacc_spgemm_preprocess<<<numBlocks,threadsPerBlock>>>(d_maxRow, d_rowPtrB[0], B->rows+1);
     cudaMemcpy(&maxRow, d_maxRow, sizeof(int), cudaMemcpyDeviceToHost);
-    //maxRow = B->cols;
+
 #ifdef PROFILE
     nvtxRangePop();
     nvtxRangePushA("CUDA_spgemm_compute");
 #endif
     threadsPerBlock = dim3(std::min(32*((maxRow+31)/32),1024));
-    numBlocks = dim3(A->rows);
-    spgemm_dacc<<<numBlocks,threadsPerBlock>>>(A->rows, A->cols, d_rowPtrA, d_colIdxA, d_valsA,
-                                               B->rows, B->cols, d_rowPtrB, d_colIdxB, d_valsB,
-                                               d_valsC);
+    for (int d = 0; d < deviceCount; d++) {
+        cudaSetDevice(d);
+        numBlocks = dim3(partition[d+1] - partition[d]);
+        spgemm_dacc<<<numBlocks,threadsPerBlock>>>(partition[d],
+                                                     A->rows, A->cols, d_rowPtrA[d], d_colIdxA[d], d_valsA[d],
+                                                     B->rows, B->cols, d_rowPtrB[d], d_colIdxB[d], d_valsB[d],
+                                                     d_valsC[d]);
+    }
 #ifdef PROFILE
     nvtxRangePop();
     nvtxRangePushA("CUDA_spgemm_malloc");
 #endif
-    h_valsC = (double*) malloc(valsC_size);
+    h_valsC = (double*) malloc((A->rows * B->cols) * sizeof(double));
 #ifdef PROFILE
     nvtxRangePop();
     nvtxRangePushA("CUDA_spgemm_DtoH");
 #endif
-    cudaMemcpy(h_valsC, d_valsC, valsC_size, cudaMemcpyDeviceToHost);
+    int offset = 0;
+    for (int d = 0; d < deviceCount; d++) {
+        cudaSetDevice(d);
+        cudaMemcpy(h_valsC+offset, d_valsC[d], valsC_sizes[d], cudaMemcpyDeviceToHost);
+        offset += valsC_sizes[d]/sizeof(double);
+    }
 #ifdef PROFILE
     nvtxRangePop();
     nvtxRangePushA("CUDA_spgemm_reconstruct");
@@ -124,14 +189,18 @@ CSRMatrix<double>* dacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     nvtxRangePushA("CUDA_spgemm_cudafree");
 #endif
 
-    cudaFree(d_rowPtrA );
-    cudaFree(d_colIdxA);
-    cudaFree(d_valsA);
-    cudaFree(d_rowPtrB );
-    cudaFree(d_colIdxB);
-    cudaFree(d_valsB);
-    cudaFree(d_valsC);
+    cudaSetDevice(0);
     cudaFree(d_maxRow);
+    for (int d = 0; d < deviceCount; d++) {
+        cudaSetDevice(d);
+        cudaFree(d_rowPtrA[d]);
+        cudaFree(d_colIdxA[d]);
+        cudaFree(d_valsA[d]);
+        cudaFree(d_rowPtrB[d]);
+        cudaFree(d_colIdxB[d]);
+        cudaFree(d_valsB[d]);
+        cudaFree(d_valsC[d]);
+    }
 #ifdef PROFILE
     nvtxRangePop();
     nvtxRangePop();
@@ -184,12 +253,11 @@ __global__ void sacc_spgemm_structureC(int* rowPtrA, int* colIdxA,
     if (tx == 0)
         rowPtrC[bx+1] = countC;
 }
-__global__ void spgemm_sacc(int rowsA, int colsA, int* rowPtrA, int* colIdxA, double* valsA,
+__global__ void spgemm_sacc_col(int rowsA, int colsA, int* rowPtrA, int* colIdxA, double* valsA,
                         int rowsB, int colsB, int* rowPtrB, int* colIdxB, double* valsB,
                         int* rowPtrC, int* colIdxC, double* valsC, uint64_t* maskC) {
 	__shared__ int sBlock[CUMSUM_BLOCK_SIZE+1];
-    int tx = threadIdx.x;
-    int bx = blockIdx.x;
+    int tx = threadIdx.x; int bx = blockIdx.x;
     if (tx == 0) sBlock[0] = 0;
     int maskCols = (colsB+63)/64;
 
@@ -220,12 +288,14 @@ __global__ void spgemm_sacc(int rowsA, int colsA, int* rowPtrA, int* colIdxA, do
                 }
             }
         }
-        //if (tx == 0) printf("%d:%d %d\n", bx, uint32_t(mask >> 32), uint32_t(mask & 0xffffffff));
         runningSum += sBlock[blockDim.x-1];
     }
-    __syncthreads();
+}
+__global__ void spgemm_sacc_val(int rowsA, int colsA, int* rowPtrA, int* colIdxA, double* valsA,
+                        int rowsB, int colsB, int* rowPtrB, int* colIdxB, double* valsB,
+                        int* rowPtrC, int* colIdxC, double* valsC, uint64_t* maskC) {
+    int tx = threadIdx.x; int bx = blockIdx.x;
     
-    //if (tx == 0) { for (tx = 0; tx < blockDim.x; tx++) {
     if (tx < colsB) {
         for (int i = rowPtrA[bx]; i < rowPtrA[bx+1]; i++) {
             double valA = valsA[i]; int c = colIdxA[i];
@@ -240,8 +310,6 @@ __global__ void spgemm_sacc(int rowsA, int colsA, int* rowPtrA, int* colIdxA, do
                         int cm = (ss+se)/2;
                         if (colIdxC[cm] == colB) {
                             atomicAdd(valsC+cm, valA * valsB[bs + tx]);
-                            //valsC[cm] += valA * valsB[bs + tx];
-                            //printf("(%d,%d) (%.3f x (%d) -> %.3f) -> %d\n", c, colB, valA, bs + tx, valsB[bs + tx], cm);
                             break;
                         }
                         else if (colIdxC[cm] < colB)
@@ -255,10 +323,15 @@ __global__ void spgemm_sacc(int rowsA, int colsA, int* rowPtrA, int* colIdxA, do
             __syncthreads();
         }
     }
-    //}}
 }
 
 CSRMatrix<double>* sacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
+    int deviceCount = 0;
+    cudaGetDeviceCount(&deviceCount);
+    if (deviceCount > 1) deviceCount = 1;
+    printf("%d GPU%s\n", deviceCount, deviceCount > 1 ? "s": "");
+    if (deviceCount == 0)
+        return nullptr;
 #ifdef PROFILE
     nvtxNameOsThread(pthread_self(), "MAIN_THREAD");
     nvtxRangePushA("CUDA_spgemm");
@@ -344,7 +417,10 @@ CSRMatrix<double>* sacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
 #endif
     threadsPerBlock = dim3(std::min(32*((maxRow+31)/32),1024));
     numBlocks = dim3(A->rows);
-    spgemm_sacc<<<numBlocks,threadsPerBlock>>>(A->rows, A->cols, d_rowPtrA, d_colIdxA, d_valsA,
+    spgemm_sacc_col<<<numBlocks,threadsPerBlock>>>(A->rows, A->cols, d_rowPtrA, d_colIdxA, d_valsA,
+                                               B->rows, B->cols, d_rowPtrB, d_colIdxB, d_valsB,
+                                               d_rowPtrC, d_colIdxC, d_valsC, d_maskC);
+    spgemm_sacc_val<<<numBlocks,threadsPerBlock>>>(A->rows, A->cols, d_rowPtrA, d_colIdxA, d_valsA,
                                                B->rows, B->cols, d_rowPtrB, d_colIdxB, d_valsB,
                                                d_rowPtrC, d_colIdxC, d_valsC, d_maskC);
 #ifdef PROFILE

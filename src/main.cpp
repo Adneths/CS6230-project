@@ -140,7 +140,8 @@ int main(int argc, char **argv) {
     /*  
     std::vector<int> rowPtr = {0,2,4,5,6},
     dataCol = {0,3,1,2,1,0};
-    std::vector<double> dataVal = {1,1,2,2,-2,-1};
+    std::vector<double> dataVal = {1,1,2,2,2,1};
+    //std::vector<double> dataVal = {1,1,2,2,-2,-1};
     CSRMatrix<double>* matrix = new CSRMatrix<double>(4, 4, rowPtr.data(), dataCol.data(), dataVal.data(), 6);*/
     /*
     std::vector<int> rowPtr(1101), dataCol(1100);
@@ -154,6 +155,7 @@ int main(int argc, char **argv) {
     CSRMatrix<double>* matrix = new CSRMatrix<double>(1100, 1100, rowPtr.data(), dataCol.data(), dataVal.data(), 1100);*/
     matrix->info();
     CSRMatrix<double> *result_cuda, *result_cusparse;
+    printf("Algorithm: %s on ", algName.c_str());
     switch(type) {
         case 0: result_cuda = cuda::dacc_spgemm(matrix, matrix); break;
         case 1: result_cuda = cuda::sacc_spgemm(matrix, matrix); break;
@@ -163,7 +165,6 @@ int main(int argc, char **argv) {
     result_cusparse = cusparse::spgemm(matrix, matrix);
     if (type == 0) result_cusparse->resparse();
 
-    printf("Algorithm: %s\n", algName.c_str());
     printf("Cuda Results: "); if (result_cuda) result_cuda->info(); else printf("nullptr\n");
     printf("CuSparse Results: "); if (result_cusparse) result_cusparse->info(); else printf("nullptr\n");
     if (compare(result_cuda, result_cusparse))
