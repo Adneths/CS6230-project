@@ -26,10 +26,10 @@ if [ "$#" -ge "2" ]; then
 fi
 
 profile() {
-    nsys profile -s none --trace=cuda,nvtx,osrt,cusparse --force-overwrite true -o $RESULTS_PATH/$3$1.nsys-rep ./spgemm_p data/$1/$1.rb $2 > $RESULTS_PATH/$3$1.txt
+    srun nsys profile -s none --trace=cuda,nvtx,osrt,cusparse --force-overwrite true -o $RESULTS_PATH/$3$1.nsys-rep ./spgemm_p data/$1/$1.rb $2 > $RESULTS_PATH/$3$1.txt
 }
 run() {
-    ./spgemm data/$1/$1.rb $2 > $RESULTS_PATH/$3$1.txt
+    srun ./spgemm data/$1/$1.rb $2 > $RESULTS_PATH/$3$1.txt
 }
 
 RESULTS_PATH='results/1gpu'
