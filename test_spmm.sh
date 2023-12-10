@@ -13,8 +13,5 @@ srun ./spmm_profile data/Hamrle1/Hamrle1.rb                          > spmm_resu
 srun ./spmm_profile data/micromass_10NN/micromass_10NN.rb            > spmm_results/micromass_10NN.txt
 srun ./spmm_profile data/umistfacesnorm_10NN/umistfacesnorm_10NN.rb  > spmm_results/umistfacesnorm_10NN.txt
 srun ./spmm_profile data/ca-HepTh/ca-HepTh.rb                        > spmm_results/ca-HepTh.txt
-srun ./spmm_profile data/copter2/copter2.rb                          > spmm_results/copter2.txt
 srun ./spmm_profile data/ex36/ex36.rb                                > spmm_results/ex36.txt
 srun ./spmm_profile data/lock1074/lock1074.rb                        > spmm_results/lock1074.txt
-srun ./spmm_profile data/nv1/nv1.rb                                  > spmm_results/nv1.txt
-srun ./spmm_profile data/pkustk08/pkustk08.rb                        > spmm_results/pkustk08.txt
