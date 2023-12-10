@@ -20,13 +20,13 @@ INCLUDE_PATH = include
 SRC_PATH = src
 INCLUDE_PATHS += -I$(INCLUDE_PATH)
 
-HEADERS = typedef.h timer.h SpGEMM_cuda.h SpGEMM_util.h SpGEMM_cusparse.h SpMSpV_cuda.h Spmm_cuda.h SpMSpV_bucket.h Spmm_gcoo.h Spmm_cusparse.h
+HEADERS = typedef.h timer.h SpGEMM_cuda.h SpGEMM_util.h SpGEMM_cusparse.h SpMSpV_cuda.h SpMM_cuda.h SpMSpV_bucket.h SpMM_gcoo.h SpMM_cusparse.h
 
 SPGEMMSRC = spgemm_test.cpp SpGEMM_cuda.cu SpGEMM_cusparse.cu SpGEMM_util.cu
 
 SPMSPVSRC = spmspv_test.cpp SpMSpV_cuda.cu SpMSpV_bucket.cu
 
-SPMMSRC = spmm_test.cpp Spmm_cuda.cu Spmm_cusparse.cu Spmm_gcoo.cu
+SPMMSRC = SpMM_test.cpp SpMM_cuda.cu SpMM_cusparse.cu SpMM_gcoo.cu
 
 INCLUDE_HEADERS = ./$(INCLUDE_PATH)/$(shell echo $(HEADERS) | sed 's/ / \.\/$(INCLUDE_PATH)\//g')
 

@@ -5,9 +5,9 @@
 #include <iostream>
 
 #include "typedef.h"
-#include "Spmm_cuda.h"
-#include "Spmm_gcoo.h"
-#include "Spmm_cusparse.h"
+#include "SpMM_cuda.h"
+#include "SpMM_gcoo.h"
+#include "SpMM_cusparse.h"
 
 extern "C"
 {

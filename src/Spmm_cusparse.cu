@@ -7,7 +7,7 @@
 #include "device_launch_parameters.h"
 #include <cusparse.h>
 
-#include "Spmm_cusparse.h"
+#include "SpMM_cusparse.h"
 
 #ifdef PROFILE
 #include "timer.h"
