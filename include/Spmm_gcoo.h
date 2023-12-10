@@ -4,8 +4,8 @@
 #include "typedef.h"
 
 // hyper-paratemers: is dealed by a thread block
-#define b_value 32 // number of columns in a group in dense matrix = number of threads in a thread block
-#define p_value 32 // number of rows in a group in sparse matrix
+#define b_value 2 // number of columns in a group in dense matrix = number of threads in a thread block
+#define p_value 4 // number of rows in a group in sparse matrix
 
 namespace GCOOSPMM
 {
