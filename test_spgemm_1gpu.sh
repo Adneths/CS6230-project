@@ -34,7 +34,7 @@ run() {
 
 RESULTS_PATH='results/1gpu'
 mkdir -p $RESULTS_PATH
-DATASETS=$(ls ./data | grep -Po "^[a-zA-Z0-9\_]+" | sort | uniq | grep -P "$FILTER")
+DATASETS=$(ls ./data | grep -Po "^[a-zA-Z0-9\_\-]+" | sort | uniq | grep -P "$FILTER" | grep -v "_toobig")
 LEN=$(echo ${DATASETS[@]} | wc -w)
 DACC=0
 SACC=0
