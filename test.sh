@@ -16,23 +16,24 @@ run() {
 }
 
 DATASETS=$(ls ./data | grep -Po "^[a-zA-Z0-9\_]+" | sort | uniq | grep -P "(GD|Ha)")
+LEN=$(echo ${DATASETS[@]} | wc -w)
 DACC=0
 SACC=0
 
 for dataset in ${DATASETS[@]}; do
-    #run $dataset 0 dacc_
+    run $dataset 0 dacc_
     DACC=$(echo $DACC+$(grep -Po "Cuda Result matches CuSparse Result" results/dacc_$dataset.txt | wc -l) | bc)
 
-    #run $dataset 1 sacc_
+    run $dataset 1 sacc_
     SACC=$(echo $SACC+$(grep -Po "Cuda Result matches CuSparse Result" results/sacc_$dataset.txt | wc -l) | bc)
 done
-echo $DACC $SACC ${#DATASETS[@]}
-if [[ $DACC -eq ${#DATASETS[@]} ]]; then
+
+if [[ $DACC -eq $LEN ]]; then
     echo "All dense accumulator results match"
 else
     echo "Not all dense accumulator results match"
 fi
-if [[ $SACC -eq ${#DATASETS[@]} ]]; then
+if [[ $SACC -eq $LEN ]]; then
     echo "All sparse accumulator results match"
 else
     echo "Not all sparse accumulator results match"
