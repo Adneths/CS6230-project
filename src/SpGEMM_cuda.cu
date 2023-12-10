@@ -7,8 +7,39 @@
 #include "SpGEMM_util.h"
 #include "SpGEMM_cuda.h"
 
+#define RED     0
+#define YELLOW  1
+#define GREEN   2
+#define AQUA    3
+#define BLUE    4
+#define PURPLE  5
+#define BLACK   6
+#define GRAY    7
+#define WHITE   8
+
 #ifdef PROFILE
 #include <nvtx3/nvToolsExtCuda.h>
+const uint32_t colors[] = { 0xffff0000, 0xffffff00, 0xff00ff00, 0xff00ffff, 0xff0000ff, 0xffff00ff, 0xff000000, 0xff808080, 0xffffffff };
+const int num_colors = sizeof(colors)/sizeof(uint32_t);
+
+#define POP_RANGE() nvtxRangePop();
+#define NAME_THREAD(name) nvtxNameOsThread(pthread_self(), name);
+#define PUSH_RANGE(name,cid) { \
+    int color_id = cid; \
+    color_id = color_id%num_colors;\
+    nvtxEventAttributes_t eventAttrib = {0}; \
+    eventAttrib.version = NVTX_VERSION; \
+    eventAttrib.size = NVTX_EVENT_ATTRIB_STRUCT_SIZE; \
+    eventAttrib.colorType = NVTX_COLOR_ARGB; \
+    eventAttrib.color = colors[color_id]; \
+    eventAttrib.messageType = NVTX_MESSAGE_TYPE_ASCII; \
+    eventAttrib.message.ascii = name; \
+    nvtxRangePushEx(&eventAttrib); \
+}
+#else
+#define POP_RANGE()
+#define NAME_THREAD(name)
+#define PUSH_RANGE(name,cid)
 #endif
 
 namespace cuda {
@@ -87,11 +118,11 @@ CSRMatrix<double>* dacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     printf("%d GPU%s\n", deviceCount, deviceCount > 1 ? "s": "");
     if (deviceCount == 0)
         return nullptr;
-#ifdef PROFILE
-    nvtxNameOsThread(pthread_self(), "MAIN_THREAD");
-    nvtxRangePushA("CUDA_spgemm");
-    nvtxRangePushA("CUDA_spgemm_cudamalloc");
-#endif
+//#ifdef PROFILE
+    NAME_THREAD("MAIN_THREAD");
+    PUSH_RANGE("CUDA_spgemm", BLACK);
+    PUSH_RANGE("CUDA_spgemm_cudamalloc", RED);
+//#endif
     int *d_rowPtrA[MAX_GPU], *d_colIdxA[MAX_GPU], *d_rowPtrB[MAX_GPU], *d_colIdxB[MAX_GPU];
     double *d_valsA[MAX_GPU], *d_valsB[MAX_GPU], *d_valsC[MAX_GPU], *h_valsC;
     int* d_maxRow; int maxRow;
@@ -123,10 +154,10 @@ CSRMatrix<double>* dacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
         cudaMalloc(&d_valsC[d], valsC_sizes[d]);
     }
 
-#ifdef PROFILE
-    nvtxRangePop();
-    nvtxRangePushA("CUDA_spgemm_HtoD");
-#endif
+//#ifdef PROFILE
+    POP_RANGE();
+    PUSH_RANGE("CUDA_spgemm_HtoD", AQUA);
+//#endif
     cudaSetDevice(0);
     cudaMemsetAsync(d_maxRow, 0, sizeof(int));
     for (int d = 0; d < deviceCount; d++) {
@@ -141,10 +172,10 @@ CSRMatrix<double>* dacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     }
     syncDevice(deviceCount);
 
-#ifdef PROFILE
-    nvtxRangePop();
-    nvtxRangePushA("CUDA_spgemm_preprocess");
-#endif
+//#ifdef PROFILE
+    POP_RANGE();
+    PUSH_RANGE("CUDA_spgemm_preprocess", YELLOW);
+//#endif
 
     cudaSetDevice(0);
     dim3 threadsPerBlock(std::min(32*((B->rows+31)/32),1024));
@@ -153,10 +184,10 @@ CSRMatrix<double>* dacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     cudaMemcpyAsync(&maxRow, d_maxRow, sizeof(int), cudaMemcpyDeviceToHost);
     syncDevice(deviceCount);
 
-#ifdef PROFILE
-    nvtxRangePop();
-    nvtxRangePushA("CUDA_spgemm_compute");
-#endif
+//#ifdef PROFILE
+    POP_RANGE();
+    PUSH_RANGE("CUDA_spgemm_compute", GREEN);
+//#endif
     threadsPerBlock = dim3(std::min(32*((maxRow+31)/32),1024));
     for (int d = 0; d < deviceCount; d++) {
         cudaSetDevice(d);
@@ -167,15 +198,15 @@ CSRMatrix<double>* dacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
                                                      d_valsC[d]);
     }
     syncDevice(deviceCount);
-#ifdef PROFILE
-    nvtxRangePop();
-    nvtxRangePushA("CUDA_spgemm_malloc");
-#endif
+//#ifdef PROFILE
+    POP_RANGE();
+    PUSH_RANGE("CUDA_spgemm_malloc", RED);
+//#endif
     h_valsC = (double*) malloc((A->rows * B->cols) * sizeof(double));
-#ifdef PROFILE
-    nvtxRangePop();
-    nvtxRangePushA("CUDA_spgemm_DtoH");
-#endif
+//#ifdef PROFILE
+    POP_RANGE();
+    PUSH_RANGE("CUDA_spgemm_DtoH", AQUA);
+//#endif
     int offset = 0;
     for (int d = 0; d < deviceCount; d++) {
         cudaSetDevice(d);
@@ -183,15 +214,15 @@ CSRMatrix<double>* dacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
         offset += valsC_sizes[d]/sizeof(double);
     }
     syncDevice(deviceCount);
-#ifdef PROFILE
-    nvtxRangePop();
-    nvtxRangePushA("CUDA_spgemm_reconstruct");
-#endif
+//#ifdef PROFILE
+    POP_RANGE();
+    PUSH_RANGE("CUDA_spgemm_reconstruct", GRAY);
+//#endif
     CSRMatrix<double>* ret = new CSRMatrix<double>(A->rows, B->cols, h_valsC);
-#ifdef PROFILE
-    nvtxRangePop();
-    nvtxRangePushA("CUDA_spgemm_cudafree");
-#endif
+//#ifdef PROFILE
+    POP_RANGE();
+    PUSH_RANGE("CUDA_spgemm_cudafree", BLUE);
+//#endif
 
     cudaSetDevice(0);
     cudaFree(d_maxRow);
@@ -206,10 +237,10 @@ CSRMatrix<double>* dacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
         cudaFree(d_valsC[d]);
     }
     syncDevice(deviceCount);
-#ifdef PROFILE
-    nvtxRangePop();
-    nvtxRangePop();
-#endif
+//#ifdef PROFILE
+    POP_RANGE();
+    POP_RANGE();
+//#endif
 
     return ret;
 }
@@ -337,11 +368,11 @@ CSRMatrix<double>* sacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     printf("%d GPU%s\n", deviceCount, deviceCount > 1 ? "s": "");
     if (deviceCount == 0)
         return nullptr;
-#ifdef PROFILE
-    nvtxNameOsThread(pthread_self(), "MAIN_THREAD");
-    nvtxRangePushA("CUDA_spgemm");
-    nvtxRangePushA("CUDA_spgemm_cudamalloc");
-#endif
+//#ifdef PROFILE
+    NAME_THREAD("MAIN_THREAD");
+    PUSH_RANGE("CUDA_spgemm", BLACK);
+    PUSH_RANGE("CUDA_spgemm_cudamalloc", RED);
+//#endif
     int *d_rowPtrA[MAX_GPU], *d_colIdxA[MAX_GPU], *d_rowPtrB[MAX_GPU], *d_colIdxB[MAX_GPU], *d_rowPtrC[MAX_GPU];
     double *d_valsA[MAX_GPU], *d_valsB[MAX_GPU];
     uint64_t *d_maskB[MAX_GPU], *d_maskC[MAX_GPU];
@@ -378,17 +409,17 @@ CSRMatrix<double>* sacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
         cudaMalloc(&d_maskC[d], maskC_size);
     }
 
-#ifdef PROFILE
-    nvtxRangePop();
-    nvtxRangePushA("CUDA_spgemm_malloc");
-#endif
+//#ifdef PROFILE
+    POP_RANGE();
+    PUSH_RANGE("CUDA_spgemm_malloc", RED);
+//#endif
     int *h_rowPtrC;
     h_rowPtrC = (int*) malloc(rowPtrC_size);
 
-#ifdef PROFILE
-    nvtxRangePop();
-    nvtxRangePushA("CUDA_spgemm_HtoD");
-#endif
+//#ifdef PROFILE
+    POP_RANGE();
+    PUSH_RANGE("CUDA_spgemm_HtoD", AQUA);
+//#endif
     cudaSetDevice(0);
     cudaMemsetAsync(d_maxRow, 0, sizeof(int));
     for (int d = 0; d < deviceCount; d++) {
@@ -404,10 +435,10 @@ CSRMatrix<double>* sacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     }
     syncDevice(deviceCount);
     
-#ifdef PROFILE
-    nvtxRangePop();
-    nvtxRangePushA("CUDA_spgemm_preprocess");
-#endif
+//#ifdef PROFILE
+    POP_RANGE();
+    PUSH_RANGE("CUDA_spgemm_preprocess", YELLOW);
+//#endif
 
     dim3 threadsPerBlock(std::min(32*((B->rows+31)/32),1024));
     dim3 numBlocks((B->rows+threadsPerBlock.x-1)/threadsPerBlock.x);
@@ -434,9 +465,9 @@ CSRMatrix<double>* sacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     int nnzC = h_rowPtrC[A->rows];
     syncDevice(deviceCount);
     //cudaMemcpyAsync(&nnzC, d_rowPtrC+A->rows, sizeof(int), cudaMemcpyDeviceToHost);
-#ifdef PROFILE
-    nvtxRangePushA("CUDA_spgemm_preprocess_cudamalloc");
-#endif
+//#ifdef PROFILE
+    PUSH_RANGE("CUDA_spgemm_preprocess_cudamalloc", RED);
+//#endif
     size_t
     colIdxC_size[MAX_GPU],// = nnzC * sizeof(int),
     valsC_size[MAX_GPU];// = nnzC * sizeof(double);
@@ -450,14 +481,14 @@ CSRMatrix<double>* sacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
         cudaMalloc(&d_colIdxC[d], colIdxC_size[d]);
         cudaMalloc(&d_valsC[d], valsC_size[d]);
     }
-#ifdef PROFILE
-    nvtxRangePop();
-#endif
+//#ifdef PROFILE
+    POP_RANGE();
+//#endif
 
-#ifdef PROFILE
-    nvtxRangePop();
-    nvtxRangePushA("CUDA_spgemm_compute");
-#endif
+//#ifdef PROFILE
+    POP_RANGE();
+    PUSH_RANGE("CUDA_spgemm_compute", GREEN);
+//#endif
     threadsPerBlock = dim3(std::min(32*((maxRow+31)/32),1024));
     for (int d = 0; d < deviceCount; d++) {
         cudaSetDevice(d);
@@ -476,18 +507,18 @@ CSRMatrix<double>* sacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
                                                        d_rowPtrC[d], d_colIdxC[d], d_valsC[d], d_maskC[d]);
     }
     syncDevice(deviceCount);
-#ifdef PROFILE
-    nvtxRangePop();
-    nvtxRangePushA("CUDA_spgemm_malloc");
-#endif
+//#ifdef PROFILE
+    POP_RANGE();
+    PUSH_RANGE("CUDA_spgemm_malloc", RED);
+//#endif
     int *h_colIdxC;
     double* h_valsC;
     h_colIdxC = (int*)malloc(nnzC * sizeof(int));
     h_valsC = (double*)malloc(nnzC * sizeof(double));
-#ifdef PROFILE
-    nvtxRangePop();
-    nvtxRangePushA("CUDA_spgemm_DtoH");
-#endif
+//#ifdef PROFILE
+    POP_RANGE();
+    PUSH_RANGE("CUDA_spgemm_DtoH", AQUA);
+//#endif
     int offset = 0;
     for (int d = 0; d < deviceCount; d++) {
         cudaSetDevice(d);
@@ -496,15 +527,15 @@ CSRMatrix<double>* sacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
         offset += colIdxC_size[d]/sizeof(int);
     }
     syncDevice(deviceCount);
-#ifdef PROFILE
-    nvtxRangePop();
-    nvtxRangePushA("CUDA_spgemm_reconstruct");
-#endif
+//#ifdef PROFILE
+    POP_RANGE();
+    PUSH_RANGE("CUDA_spgemm_reconstruct", GRAY);
+//#endif
     CSRMatrix<double>* ret = new CSRMatrix<double>(A->rows, B->cols, h_rowPtrC, h_colIdxC, h_valsC, nnzC);
-#ifdef PROFILE
-    nvtxRangePop();
-    nvtxRangePushA("CUDA_spgemm_cudafree");
-#endif
+//#ifdef PROFILE
+    POP_RANGE();
+    PUSH_RANGE("CUDA_spgemm_cudafree", BLUE);
+//#endif
 
     cudaSetDevice(0);
     cudaFree(d_maxRow);
@@ -524,10 +555,10 @@ CSRMatrix<double>* sacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
         cudaFree(d_valsC[d]);
     }
     syncDevice(deviceCount);
-#ifdef PROFILE
-    nvtxRangePop();
-    nvtxRangePop();
-#endif
+//#ifdef PROFILE
+    POP_RANGE();
+    POP_RANGE();
+//#endif
     cudaSetDevice(0);
 
     return ret;
