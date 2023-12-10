@@ -323,7 +323,7 @@ struct GCOO
             }
         }
         std::cout << row_index << "\n";
-        std::cout << bool(row_index == nnz - 1) << "row_index == nnz-1\n";
+        std::cout << bool(row_index == nnz) << ": row_index == nnz-1\n\n";
 
         for (int i = 0; i < num_group; i++)
         {
@@ -339,21 +339,65 @@ struct GCOO
         }
         // check the transformation:
         std::cout << "Origin CSR format:\n"
+                  << "number of rows:" << mat->rows << "\n"
+                  << "number of cols:" << mat->cols << "\n"
                   << "nnz:" << mat->nnz << "\n"
-                  << "rowptr:" << mat->rowPtr << "\n"
-                  << "dataCol:" << mat->dataCol << "\n"
-                  << "values:" << mat->dataVal << "\n\n";
+                  << "rowptr:" << mat->rowPtr << "\n";
+        for (int i = 0; i < mat->rows + 1; i++)
+        {
+            std::cout << mat->rowPtr[i] << ",";
+        }
+        std::cout << "\n";
+        std::cout << "data column:\n";
+        for (int i = 0; i < mat->nnz; i++)
+        {
+            std::cout << mat->dataCol[i] << ",";
+        }
+        std::cout << "\n";
+        std::cout << "data value:\n";
+        for (int i = 0; i < mat->nnz; i++)
+        {
+            std::cout << mat->dataVal[i] << ",";
+        }
+        std::cout << "\n";
+        std::cout << "\n";
 
         std::cout << "Transformed GCOO format:\n"
                   << "number of rows:" << this->num_row << "\n"
                   << "number of cols:" << this->num_col << "\n"
                   << "number of groups:" << this->num_group << "\n"
-                  << "nnz:" << this->nnz << "\n"
-                  << "rowptr_new:" << this->rows << "\n"
-                  << "colptr:" << this->cols << "\n"
-                  << "gidxes:" << this->gIdexs << "\n"
-                  << "nnzpergroup:" << this->nnzpergroup << "\n"
-                  << "values:" << this->values << "\n\n";
+                  << "nnz:" << this->nnz << "\n";
+        std::cout << "rowptr_new:\n";
+        for (int i = 0; i < this->nnz; i++)
+        {
+            std::cout << this->rows[i] << ",";
+        }
+        std::cout << "\n";
+        std::cout << "colptr:\n";
+        for (int i = 0; i < this->nnz; i++)
+        {
+            std::cout << this->cols[i] << ",";
+        }
+        std::cout << "\n";
+        std::cout << "gidxes:\n";
+        for (int i = 0; i < this->num_group; i++)
+        {
+            std::cout << this->gIdexs[i] << ",";
+        }
+        std::cout << "\n";
+        std::cout << "nnzpergroup:\n";
+        for (int i = 0; i < this->num_group; i++)
+        {
+            std::cout << this->nnzpergroup[i] << ",";
+        }
+        std::cout << "\n";
+        std::cout << "values:\n";
+        for (int i = 0; i < this->nnz; i++)
+        {
+            std::cout << this->values[i] << ",";
+        }
+        std::cout << "\n";
+        std::cout << "\n";
     }
     ~GCOO()
     {
