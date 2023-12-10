@@ -100,17 +100,16 @@ int main(int argc, char **argv) {
 ///*
     if (argc < 2) {
         printf("Usage: ./<program> <harwell-boeing-file> <algorithm:0>");
-        printf("Algorithm: 0 - Full Dense Accumulator");
-        printf("         : 1 - Full Sparse Accumulator");
-        printf("         : 2 - Tiled SpGEMM (Not avaliable)");
+        printf("Algorithm: 0 - Full Dense Accumulator\n");
+        printf("         : 1 - Full Sparse Accumulator\n");
         return 1;
     }
     int type = 0;
     if (argc >= 3) {
         type = atoi(argv[2]);
     }
-    if (type > 2 || type < 0) {
-        printf("Type %d not supported, the range is [0,2]\n", type);
+    if (type > 1 || type < 0) {
+        printf("Type %d not supported, the range is [0,1]\n", type);
         return 1;
     }
 
