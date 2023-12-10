@@ -2,7 +2,6 @@
 
 ## Introduction
 
-
 ## Requirements
 
 - [Bebop Sparse Matrix Conversion Library](http://bebop.cs.berkeley.edu/smc/)
@@ -24,8 +23,6 @@ export BEBOP_UTIL_INCLUDE=${BEBOP_INSTALL_DIR}/bebop_util/include/
 On perlmutter `CUSPARSE_LIB_PATH` should be `/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/math_libs/11.7/lib64`
 
 ## Usage
-
-
 
 ### SpGEMM
 
@@ -56,7 +53,15 @@ Usage: ./spmspv <harwell-boeing-file>
 
 ### SpMM
 
+run "make spmm" or "make spmm_profile" to obtain the executable file
+
+The executable multiplies the input sparse matrix with a generated random dense matrix. Sbatch the `test_spmm.sh` script to schedule. Use `spmm_profile` for a NVTX enabled version.
+
+```
+Usage: ./spmm <harwell-boeing-file>  or ./spmm_profile <harwell-boeing-file>
+```
+
 ## Notes
 
 - Bebop library has a maximum size on the input it could read which is approximately $80k \times 80k$
-- Bebop library automatically sets the symmetric_type of loaded matrix as *sypmmetric(1)*, which causes mistakes in the csc_to_csr() function. Mannually set the symmetric_type  as *unsymmetric*, or the csc_to_csr() function just assign the pointers to the counterparts (so that you get a transposed matrix of the original)
+- Bebop library automatically sets the symmetric*type of loaded matrix as \_sypmmetric(1)*, which causes mistakes in the csc*to_csr() function. Mannually set the symmetric_type as \_unsymmetric*, or the csc_to_csr() function just assign the pointers to the counterparts (so that you get a transposed matrix of the original)
