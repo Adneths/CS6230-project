@@ -26,7 +26,7 @@ SPGEMMSRC = spgemm_test.cpp SpGEMM_cuda.cu SpGEMM_cusparse.cu SpGEMM_util.cu
 
 SPMSPVSRC = spmspv_test.cpp SpMSpV_cuda.cu SpMSpV_bucket.cu
 
-SPMMSRC = SpMM_test.cpp SpMM_cuda.cu SpMM_cusparse.cu SpMM_gcoo.cu
+SPMMSRC = spmm_test.cpp SpMM_cuda.cu SpMM_cusparse.cu SpMM_gcoo.cu
 
 INCLUDE_HEADERS = ./$(INCLUDE_PATH)/$(shell echo $(HEADERS) | sed 's/ / \.\/$(INCLUDE_PATH)\//g')
 
