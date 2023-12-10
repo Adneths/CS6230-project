@@ -49,5 +49,12 @@ __inline__ __device__ int blockReduceAdd(int val, int resultantWarp) {
 	return val;
 }
 void cumsumI(int* in, int* out, size_t len);
+
+__inline__ void syncDevice(int N) {
+	for (int i = 0; i < N; i++) {
+		cudaSetDevice(i);
+		cudaDeviceSynchronize();
+	}
+}
 }
 #endif

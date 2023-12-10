@@ -128,18 +128,19 @@ CSRMatrix<double>* dacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     nvtxRangePushA("CUDA_spgemm_HtoD");
 #endif
     cudaSetDevice(0);
-    cudaMemset(d_maxRow, 0, sizeof(int));
+    cudaMemsetAsync(d_maxRow, 0, sizeof(int));
     for (int d = 0; d < deviceCount; d++) {
         cudaSetDevice(d);
-        cudaMemcpy(d_rowPtrA[d], A->rowPtr , rowPtrA_size , cudaMemcpyHostToDevice);
-        cudaMemcpy(d_colIdxA[d], A->dataCol, colIdxA_size, cudaMemcpyHostToDevice);
-        cudaMemcpy(d_valsA[d], A->dataVal, valsA_size, cudaMemcpyHostToDevice);
-        cudaMemcpy(d_rowPtrB[d], B->rowPtr , rowPtrB_size , cudaMemcpyHostToDevice);
-        cudaMemcpy(d_colIdxB[d], B->dataCol, colIdxB_size, cudaMemcpyHostToDevice);
-        cudaMemcpy(d_valsB[d], B->dataVal, valsB_size, cudaMemcpyHostToDevice);
-        cudaMemset(d_valsC[d], 0, valsC_sizes[d]);
+        cudaMemcpyAsync(d_rowPtrA[d], A->rowPtr , rowPtrA_size , cudaMemcpyHostToDevice);
+        cudaMemcpyAsync(d_colIdxA[d], A->dataCol, colIdxA_size, cudaMemcpyHostToDevice);
+        cudaMemcpyAsync(d_valsA[d], A->dataVal, valsA_size, cudaMemcpyHostToDevice);
+        cudaMemcpyAsync(d_rowPtrB[d], B->rowPtr , rowPtrB_size , cudaMemcpyHostToDevice);
+        cudaMemcpyAsync(d_colIdxB[d], B->dataCol, colIdxB_size, cudaMemcpyHostToDevice);
+        cudaMemcpyAsync(d_valsB[d], B->dataVal, valsB_size, cudaMemcpyHostToDevice);
+        cudaMemsetAsync(d_valsC[d], 0, valsC_sizes[d]);
     }
-    
+    syncDevice(deviceCount);
+
 #ifdef PROFILE
     nvtxRangePop();
     nvtxRangePushA("CUDA_spgemm_preprocess");
@@ -149,7 +150,8 @@ CSRMatrix<double>* dacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     dim3 threadsPerBlock(std::min(32*((B->rows+31)/32),1024));
     dim3 numBlocks((B->rows+threadsPerBlock.x-1)/threadsPerBlock.x);
     dacc_spgemm_preprocess<<<numBlocks,threadsPerBlock>>>(d_maxRow, d_rowPtrB[0], B->rows+1);
-    cudaMemcpy(&maxRow, d_maxRow, sizeof(int), cudaMemcpyDeviceToHost);
+    cudaMemcpyAsync(&maxRow, d_maxRow, sizeof(int), cudaMemcpyDeviceToHost);
+    syncDevice(deviceCount);
 
 #ifdef PROFILE
     nvtxRangePop();
@@ -164,6 +166,7 @@ CSRMatrix<double>* dacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
                                                      B->rows, B->cols, d_rowPtrB[d], d_colIdxB[d], d_valsB[d],
                                                      d_valsC[d]);
     }
+    syncDevice(deviceCount);
 #ifdef PROFILE
     nvtxRangePop();
     nvtxRangePushA("CUDA_spgemm_malloc");
@@ -176,9 +179,10 @@ CSRMatrix<double>* dacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     int offset = 0;
     for (int d = 0; d < deviceCount; d++) {
         cudaSetDevice(d);
-        cudaMemcpy(h_valsC+offset, d_valsC[d], valsC_sizes[d], cudaMemcpyDeviceToHost);
+        cudaMemcpyAsync(h_valsC+offset, d_valsC[d], valsC_sizes[d], cudaMemcpyDeviceToHost);
         offset += valsC_sizes[d]/sizeof(double);
     }
+    syncDevice(deviceCount);
 #ifdef PROFILE
     nvtxRangePop();
     nvtxRangePushA("CUDA_spgemm_reconstruct");
@@ -201,6 +205,7 @@ CSRMatrix<double>* dacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
         cudaFree(d_valsB[d]);
         cudaFree(d_valsC[d]);
     }
+    syncDevice(deviceCount);
 #ifdef PROFILE
     nvtxRangePop();
     nvtxRangePop();
@@ -385,18 +390,19 @@ CSRMatrix<double>* sacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     nvtxRangePushA("CUDA_spgemm_HtoD");
 #endif
     cudaSetDevice(0);
-    cudaMemset(d_maxRow, 0, sizeof(int));
+    cudaMemsetAsync(d_maxRow, 0, sizeof(int));
     for (int d = 0; d < deviceCount; d++) {
         cudaSetDevice(d);
-        cudaMemcpy(d_rowPtrA[d], A->rowPtr , rowPtrA_size , cudaMemcpyHostToDevice);
-        cudaMemcpy(d_colIdxA[d], A->dataCol, colIdxA_size, cudaMemcpyHostToDevice);
-        cudaMemcpy(d_valsA[d], A->dataVal, valsA_size, cudaMemcpyHostToDevice);
-        cudaMemcpy(d_rowPtrB[d], B->rowPtr , rowPtrB_size , cudaMemcpyHostToDevice);
-        cudaMemcpy(d_colIdxB[d], B->dataCol, colIdxB_size, cudaMemcpyHostToDevice);
-        cudaMemcpy(d_valsB[d], B->dataVal, valsB_size, cudaMemcpyHostToDevice);
-        cudaMemset(d_maskB[d], 0, maskB_size);
-        cudaMemset(d_rowPtrC[d], 0, sizeof(int)); // Set first int to 0
+        cudaMemcpyAsync(d_rowPtrA[d], A->rowPtr , rowPtrA_size , cudaMemcpyHostToDevice);
+        cudaMemcpyAsync(d_colIdxA[d], A->dataCol, colIdxA_size, cudaMemcpyHostToDevice);
+        cudaMemcpyAsync(d_valsA[d], A->dataVal, valsA_size, cudaMemcpyHostToDevice);
+        cudaMemcpyAsync(d_rowPtrB[d], B->rowPtr , rowPtrB_size , cudaMemcpyHostToDevice);
+        cudaMemcpyAsync(d_colIdxB[d], B->dataCol, colIdxB_size, cudaMemcpyHostToDevice);
+        cudaMemcpyAsync(d_valsB[d], B->dataVal, valsB_size, cudaMemcpyHostToDevice);
+        cudaMemsetAsync(d_maskB[d], 0, maskB_size);
+        cudaMemsetAsync(d_rowPtrC[d], 0, sizeof(int)); // Set first int to 0
     }
+    syncDevice(deviceCount);
     
 #ifdef PROFILE
     nvtxRangePop();
@@ -411,7 +417,8 @@ CSRMatrix<double>* sacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
             B->rows, B->cols, d_rowPtrB[d], d_colIdxB[d], d_maskB[d], d==0?d_maxRow:nullptr);
     }
     cudaSetDevice(0);
-    cudaMemcpy(&maxRow, d_maxRow, sizeof(int), cudaMemcpyDeviceToHost);
+    cudaMemcpyAsync(&maxRow, d_maxRow, sizeof(int), cudaMemcpyDeviceToHost);
+    syncDevice(deviceCount);
 
     threadsPerBlock = dim3(std::min(32*((((B->cols+63)/64)+31)/32),1024)); // equlvalent to ceil( ceil(colsB/64) / 32)
     numBlocks = dim3(A->rows);
@@ -423,9 +430,10 @@ CSRMatrix<double>* sacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     }
 
     cudaSetDevice(0);
-    cudaMemcpy(h_rowPtrC, d_rowPtrC[0], rowPtrC_size, cudaMemcpyDeviceToHost);
+    cudaMemcpyAsync(h_rowPtrC, d_rowPtrC[0], rowPtrC_size, cudaMemcpyDeviceToHost);
     int nnzC = h_rowPtrC[A->rows];
-    //cudaMemcpy(&nnzC, d_rowPtrC+A->rows, sizeof(int), cudaMemcpyDeviceToHost);
+    syncDevice(deviceCount);
+    //cudaMemcpyAsync(&nnzC, d_rowPtrC+A->rows, sizeof(int), cudaMemcpyDeviceToHost);
 #ifdef PROFILE
     nvtxRangePushA("CUDA_spgemm_preprocess_cudamalloc");
 #endif
@@ -467,6 +475,7 @@ CSRMatrix<double>* sacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
                                                        B->rows, B->cols, d_rowPtrB[d], d_colIdxB[d], d_valsB[d],
                                                        d_rowPtrC[d], d_colIdxC[d], d_valsC[d], d_maskC[d]);
     }
+    syncDevice(deviceCount);
 #ifdef PROFILE
     nvtxRangePop();
     nvtxRangePushA("CUDA_spgemm_malloc");
@@ -482,10 +491,11 @@ CSRMatrix<double>* sacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     int offset = 0;
     for (int d = 0; d < deviceCount; d++) {
         cudaSetDevice(d);
-        cudaMemcpy(h_colIdxC+offset, d_colIdxC[d], colIdxC_size[d], cudaMemcpyDeviceToHost);
-        cudaMemcpy(h_valsC+offset, d_valsC[d], valsC_size[d], cudaMemcpyDeviceToHost);
+        cudaMemcpyAsync(h_colIdxC+offset, d_colIdxC[d], colIdxC_size[d], cudaMemcpyDeviceToHost);
+        cudaMemcpyAsync(h_valsC+offset, d_valsC[d], valsC_size[d], cudaMemcpyDeviceToHost);
         offset += colIdxC_size[d]/sizeof(int);
     }
+    syncDevice(deviceCount);
 #ifdef PROFILE
     nvtxRangePop();
     nvtxRangePushA("CUDA_spgemm_reconstruct");
@@ -513,12 +523,13 @@ CSRMatrix<double>* sacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
         cudaFree(d_colIdxC[d]);
         cudaFree(d_valsC[d]);
     }
+    syncDevice(deviceCount);
 #ifdef PROFILE
     nvtxRangePop();
     nvtxRangePop();
 #endif
     cudaSetDevice(0);
-    
+
     return ret;
 }
 
