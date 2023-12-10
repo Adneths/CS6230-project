@@ -20,21 +20,39 @@ INCLUDE_PATH = include
 SRC_PATH = src
 INCLUDE_PATHS += -I$(INCLUDE_PATH)
 
-SOURCES = main.cpp
-HEADERS = typedef.h timer.h SpGEMM_cuda.h SpGEMM_util.h SpGEMM_cusparse.h # TileSpGEMM_cuda.h
-CUDA_SOURCES = SpGEMM_cuda.cu SpGEMM_util.cu SpGEMM_cusparse.cu # TileSpGEMM_cuda.cu
+HEADERS = typedef.h timer.h SpGEMM_cuda.h SpGEMM_util.h SpGEMM_cusparse.h SpMSpV_cuda.h Spmm_cuda.h SpMSpV_bucket.h Spmm_gcoo.h Spmm_cusparse.h
+
+SPGEMMSRC = spgemm_test.cpp SpGEMM_cuda.cu SpGEMM_cusparse.cu SpGEMM_util.cu
+
+SPMSPVSRC = spmspv_test.cpp SpMSpV_cuda.cu SpMSpV_bucket.cu
+
+SPMMSRC = spmm_test.cpp Spmm_cuda.cu Spmm_cusparse.cu Spmm_gcoo.cu
 
 INCLUDE_HEADERS = ./$(INCLUDE_PATH)/$(shell echo $(HEADERS) | sed 's/ / \.\/$(INCLUDE_PATH)\//g')
-SRC_SOURCES= ./$(SRC_PATH)/$(shell echo $(SOURCES) | sed 's/ / \.\/$(SRC_PATH)\//g')
-SRC_CUDA_SOURCES= ./$(SRC_PATH)/$(shell echo $(CUDA_SOURCES) | sed 's/ / \.\/$(SRC_PATH)\//g')
 
-all: spgemm spgemm_p
+SPGEMMSRC_SOURCES= ./$(SRC_PATH)/$(shell echo $(SPGEMMSRC) | sed 's/ / \.\/$(SRC_PATH)\//g')
+SPMSPVSRC_SOURCES= ./$(SRC_PATH)/$(shell echo $(SPMSPVSRC) | sed 's/ / \.\/$(SRC_PATH)\//g')
+SPMMSRC_SOURCES= ./$(SRC_PATH)/$(shell echo $(SPMMSRC) | sed 's/ / \.\/$(SRC_PATH)\//g')
 
-spgemm: $(SRC_SOURCES) $(INCLUDE_HEADERS) $(SRC_CUDA_SOURCES)
-	nvcc $(NVCCFLAGS) $(SRC_SOURCES) $(SRC_CUDA_SOURCES) -o $@ $(LDFLAGS)
+all: spgemm spgemm_profile spmspv spmspv_profile spmm spmm_profile
 
-spgemm_p: $(SRC_SOURCES) $(INCLUDE_HEADERS) $(SRC_CUDA_SOURCES)
-	nvcc $(NVCCFLAGS) $(SRC_SOURCES) $(SRC_CUDA_SOURCES) -D PROFILE -o $@ $(LDFLAGS)
+spgemm: $(SPGEMMSRC_SOURCES) $(INCLUDE_HEADERS)
+	nvcc $(NVCCFLAGS) $(SPGEMMSRC_SOURCES) -o $@ $(LDFLAGS)
+
+spgemm_profile: $(SPGEMMSRC_SOURCES) $(INCLUDE_HEADERS)
+	nvcc $(NVCCFLAGS) $(SPGEMMSRC_SOURCES) -D PROFILE -o $@ $(LDFLAGS)
+
+spmspv: $(SPMSPVSRC_SOURCES) $(INCLUDE_HEADERS)
+	nvcc $(NVCCFLAGS) $(SPMSPVSRC_SOURCES) -o $@ $(LDFLAGS)
+
+spmspv_profile: $(SPMSPVSRC_SOURCES) $(INCLUDE_HEADERS)
+	nvcc $(NVCCFLAGS) $(SPMSPVSRC_SOURCES) -D PROFILE -o $@ $(LDFLAGS)
+
+spmm: $(SPMMSRC_SOURCES) $(INCLUDE_HEADERS)
+	nvcc $(NVCCFLAGS) $(SPMMSRC_SOURCES) -o $@ $(LDFLAGS)
+
+spmm_profile: $(SPMMSRC_SOURCES) $(INCLUDE_HEADERS)
+	nvcc $(NVCCFLAGS) $(SPMMSRC_SOURCES) -D PROFILE -o $@ $(LDFLAGS)
 
 clean:
-	rm -f spgemm spgemm_p *.o
+	rm -f spgemm spgemm_profile spmspv spmspv_profile spmm spmm_profile *.o

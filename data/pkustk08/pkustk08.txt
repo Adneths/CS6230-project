@@ -1,0 +1,12 @@
+%-------------------------------------------------------------------------------
+% UF Sparse Matrix Collection, Tim Davis
+% http://www.cise.ufl.edu/research/sparse/matrices/Chen/pkustk08
+% name: Chen/pkustk08
+% [PKU SYMMETRIC STIFFNESS, 11*11*11 MESH (21 NODES ELEMENT)]
+% id: 854
+% date: 2002
+% author: P. Chen
+% ed: T. Davis
+% fields: title A name id date author ed kind
+% kind: structural problem
+%-------------------------------------------------------------------------------

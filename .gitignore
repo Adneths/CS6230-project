@@ -1,5 +1,12 @@
-data/*
 results/*
 spgemm
 spgemm_p
 *.out
+.vscode/*
+
+spgemm
+spgemm_profile
+spmspv
+spmspv_profile
+spmm
+spmm_profile
