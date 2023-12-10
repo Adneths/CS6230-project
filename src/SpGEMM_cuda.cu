@@ -241,6 +241,7 @@ CSRMatrix<double>* dacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     POP_RANGE();
     POP_RANGE();
 //#endif
+    cudaSetDevice(0);
 
     return ret;
 }
