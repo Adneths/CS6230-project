@@ -50,7 +50,7 @@ namespace cuda
 
                                         double valB = dense_matrix[c * num_colB + col];
 
-                                        atomicAdd(&dataValC[bx * num_colB + col], valA * valB);
+                                        dataValC[bx * num_colB + col] += valA * valB;
                                 }
                         }
                 }
