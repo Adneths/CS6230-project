@@ -179,31 +179,38 @@ int main(int argc, char **argv)
     // std::cout << "\n";
     // std::cout << "\n";
     CSRMatrix<double> *spmm_result_cuda, *spmm_result_cusparse, *spmm_result_gcoo;
+    std::cout << "SPMM using cuda-time record*********************\n";
     spmm_result_cuda = cuda::spmm(matrix, dense_matrix);
+    std::cout << "SPMM using GCOO-time record*********************\n";
+    std::cout << "SPMM GCOO Hypter-parameter choosing:p=" << p_value << "b=" << b_value;
     spmm_result_gcoo = GCOOSPMM::spmm(gcoo_spm, dense_matrix);
+    printf("\n");
     // spmm_result_cusparse = cusparse::spmv(matrix, dense_vector);
     // std::cout << result_cuda << std::endl;
 
     // std::cout << result_cusparse << std::endl;
 
-    printf("SPMM Cuda Results: ");
+    printf("SPMM Cuda Results info-------------------\n ");
     if (spmm_result_cuda)
         spmm_result_cuda->info();
     else
         printf("nullptr\n");
 
-    printf("SPMM GCOO Results: ");
+    printf("SPMM GCOO Results info------------------- \n");
     if (spmm_result_gcoo)
         spmm_result_gcoo->info();
     else
         printf("nullptr\n");
 
+    printf("\n");
+
+    printf("Verify Correctness^^^^^^^^^^^^^^^^^^^^^^^^ \n");
     if (compare(spmm_result_cuda, spmm_result_gcoo))
     {
-        printf("The results of spmm_cuda and cpmm_gcoo are same");
+        printf("The results of spmm_cuda and cpmm_gcoo are same\n");
     }
     else
-        printf("The results of spmm_cuda and cpmm_gcoo are different");
+        printf("The results of spmm_cuda and cpmm_gcoo are different\n");
     // printf("CuSparse Results: ");
     // if (result_cusparse)
     //     result_cusparse->info();

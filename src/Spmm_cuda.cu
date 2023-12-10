@@ -16,21 +16,42 @@ namespace cuda
         __global__ void spmm_kx(int *rowPtrA, int *dataColA, double *dataValA,
                                 double *dense_matrix, int num_colB,
                                 double *dataValC)
+        // {
+        //         int tx = threadIdx.x;
+        //         int bx = blockIdx.x;
+        //         if (tx < num_colB)
+        //         {
+        //                 int as = rowPtrA[bx];
+        //                 int ae = rowPtrA[bx + 1];
+        //                 for (int i = as; i < ae; i++)
+        //                 {
+        //                         double valA = dataValA[i];
+        //                         int c = dataColA[i];
+
+        //                         double valB = dense_matrix[c * num_colB + tx];
+
+        //                         dataValC[bx * num_colB + tx] += valA * valB;
+        //                 }
+        //         }
+        // }
         {
                 int tx = threadIdx.x;
                 int bx = blockIdx.x;
-                if (tx < num_colB)
+                for (int col = tx; col < num_colB; col += blockDim.x) // a thread is responsible for more columns
                 {
-                        int as = rowPtrA[bx];
-                        int ae = rowPtrA[bx + 1];
-                        for (int i = as; i < ae; i++)
                         {
-                                double valA = dataValA[i];
-                                int c = dataColA[i];
+                                int as = rowPtrA[bx];
+                                int ae = rowPtrA[bx + 1];
+                                double temp = 0.0;
+                                for (int i = as; i < ae; i++)
+                                {
+                                        double valA = dataValA[i];
+                                        int c = dataColA[i];
 
-                                double valB = dense_matrix[c * num_colB + tx];
+                                        double valB = dense_matrix[c * num_colB + col];
 
-                                dataValC[bx * num_colB + tx] += valA * valB;
+                                        atomicAdd(&dataValC[bx * num_colB + col], valA * valB);
+                                }
                         }
                 }
         }
@@ -63,7 +84,8 @@ namespace cuda
                 cudaMemcpy(MatrixOnGpu, DenseMatrixB->matrix, DenseMatrixB_size, cudaMemcpyHostToDevice);
                 cudaMemset(d_dataValC, 0, dataValC_size);
 
-                dim3 threadsPerBlock(32 * ((DenseMatrixB->col_num + 31) / 32));
+                // dim3 threadsPerBlock(32 * ((DenseMatrixB->col_num + 31) / 32));
+                dim3 threadsPerBlock(1024);
                 dim3 numBlocks(A->rows);
 #ifdef PROFILE
                 time = timer.tick();
