@@ -197,6 +197,13 @@ int main(int argc, char **argv)
         spmm_result_gcoo->info();
     else
         printf("nullptr\n");
+
+    if (compare(spmm_result_cuda, spmm_result_gcoo))
+    {
+        printf("The results of spmm_cuda and cpmm_gcoo are same");
+    }
+    else
+        printf("The results of spmm_cuda and cpmm_gcoo are different");
     // printf("CuSparse Results: ");
     // if (result_cusparse)
     //     result_cusparse->info();
