@@ -7,6 +7,7 @@
 #include "typedef.h"
 #include "Spmm_cuda.h"
 #include "Spmm_gcoo.h"
+#include "Spmm_cusparse.h"
 
 extern "C"
 {
@@ -180,6 +181,8 @@ int main(int argc, char **argv)
     // std::cout << "\n";
     // std::cout << "\n";
     CSRMatrix<double> *spmm_result_cuda, *spmm_result_cusparse, *spmm_result_gcoo;
+    std::cout << "SPMM using cusparse-time record*********************\n";
+    spmm_result_cusparse = cusparse::spmm(matrix, dense_matrix);
     std::cout << "SPMM using cuda-time record*********************\n";
     spmm_result_cuda = cuda::spmm(matrix, dense_matrix);
     std::cout << "SPMM using GCOO-time record*********************\n";
@@ -190,6 +193,11 @@ int main(int argc, char **argv)
     // std::cout << result_cuda << std::endl;
 
     // std::cout << result_cusparse << std::endl;
+    printf("SPMM Cusparse Results info-------------------\n ");
+    if (spmm_result_cusparse)
+        spmm_result_cusparse->info();
+    else
+        printf("nullptr\n");
 
     printf("SPMM Cuda Results info-------------------\n ");
     if (spmm_result_cuda)
@@ -206,12 +214,20 @@ int main(int argc, char **argv)
     printf("\n");
 
     printf("Verify Correctness^^^^^^^^^^^^^^^^^^^^^^^^ \n");
-    if (compare(spmm_result_cuda, spmm_result_gcoo))
+
+    if (compare(spmm_result_cusparse, spmm_result_cuda))
     {
-        printf("The results of spmm_cuda and cpmm_gcoo are same\n");
+        printf("The results of spmm_cusparse and spmm_cuda are same\n");
     }
     else
-        printf("The results of spmm_cuda and cpmm_gcoo are different\n");
+        printf("The results of spmm_cusparse and spmm_cuda are different\n");
+
+    if (compare(spmm_result_cuda, spmm_result_gcoo))
+    {
+        printf("The results of spmm_cuda and spmm_gcoo are same\n");
+    }
+    else
+        printf("The results of spmm_cuda and spmm_gcoo are different\n");
     // printf("CuSparse Results: ");
     // if (result_cusparse)
     //     result_cusparse->info();
@@ -245,6 +261,7 @@ int main(int argc, char **argv)
     delete dense_matrix;
     delete gcoo_spm;
     delete spmm_result_gcoo;
+    delete spmm_result_cusparse;
     // delete spmm_result_cusparse;
     return 0;
 }
