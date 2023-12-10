@@ -42,7 +42,7 @@ namespace cuda
                         {
                                 int as = rowPtrA[bx];
                                 int ae = rowPtrA[bx + 1];
-                                double temp = 0.0;
+                                // double temp = 0.0;
                                 for (int i = as; i < ae; i++)
                                 {
                                         double valA = dataValA[i];
