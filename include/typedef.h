@@ -318,15 +318,11 @@ struct GCOO
         {
             for (int j = 0; j < rowPtr[i + 1] - rowPtr[i]; j++)
             {
-                printf("yes\n");
                 rows[row_index] = i;
-                printf("yes\n");
                 row_index++;
-                // std::cout << "Origin CSR format:\n"
-                //           << "nnz:" << mat->nnz << "\n"
-                //           << "rowptr:" << mat->rowPtr << "\n"
             }
         }
+        std::cout << row_index << "\n";
         std::cout << bool(row_index == nnz - 1) << "row_index == nnz-1\n";
 
         for (int i = 0; i < num_group; i++)
