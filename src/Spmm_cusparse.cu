@@ -46,9 +46,9 @@ namespace cusparse
 #endif
         double alpha = 1.0f;
         double beta = 0.0f;
-        cusparseOperation_t opA = CUSPARSE_OPERATION_NON_TRANSPOSE;
-        cusparseOperation_t opB = CUSPARSE_OPERATION_NON_TRANSPOSE;
-        cudaDataType computeType = CUDA_R_64F;
+        // cusparseOperation_t opA = CUSPARSE_OPERATION_NON_TRANSPOSE;
+        // cusparseOperation_t opB = CUSPARSE_OPERATION_NON_TRANSPOSE;
+        // cudaDataType computeType = CUDA_R_64F;
 
         // Allocate
         int *d_rowPtrA, *d_dataColA;
@@ -57,8 +57,8 @@ namespace cusparse
             rowPtrA_size = (A->rows + 1) * sizeof(int),
             dataColA_size = (A->nnz) * sizeof(int),
             dataValA_size = (A->nnz) * sizeof(double),
-            B_size = B->total_size;
-        C_size = A->rows * B->col_num;
+            B_size = (B->total_size) * sizeof(double),
+            C_size = (A->rows * B->col_num) * sizeof(double);
 
         cudaMalloc(&d_rowPtrA, rowPtrA_size);
         cudaMalloc(&d_dataColA, dataColA_size);
@@ -84,11 +84,11 @@ namespace cusparse
                                          CUSPARSE_INDEX_32I, CUSPARSE_INDEX_32I,
                                          CUSPARSE_INDEX_BASE_ZERO, CUDA_R_64F))
         // Create dense matrix B
-        CHECK_CUSPARSE(cusparseCreateDnMat(&matB, B->rows, B->cols, B->rows, d_B,
-                                           CUDA_R_64F, B->order == ROW_MAJOR ? CUSPARSE_ORDER_ROW : CUSPARSE_ORDER_COL))
+        CHECK_CUSPARSE(cusparseCreateDnMat(&matB, B->row_num, B->col_num, B->col_num, d_B,
+                                           CUDA_R_64F, CUSPARSE_ORDER_ROW))
         // Create dense matrix C
-        CHECK_CUSPARSE(cusparseCreateDnMat(&matC, A->rows, B->cols, A->rows, d_C,
-                                           CUDA_R_64F, B->order == ROW_MAJOR ? CUSPARSE_ORDER_ROW : CUSPARSE_ORDER_COL))
+        CHECK_CUSPARSE(cusparseCreateDnMat(&matC, A->rows, B->col_num, A->rows, d_C,
+                                           CUDA_R_64F, CUSPARSE_ORDER_ROW))
         //--------------------------------------------------------------------------
 #ifdef PROFILE
         time = timer.tick();
@@ -128,7 +128,7 @@ namespace cusparse
 
         cudaMemcpy(h_C, d_C, A->rows * B->col_num * sizeof(double), cudaMemcpyDeviceToHost);
 
-        CSRMatrix<double> *ret = new CSRMatrix<double>(A->num_row, B->col_num, h_C);
+        CSRMatrix<double> *ret = new CSRMatrix<double>(A->rows, B->col_num, h_C);
 
         cudaFree(dBuffer);
         cudaFree(d_rowPtrA);
