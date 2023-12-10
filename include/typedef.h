@@ -309,7 +309,7 @@ struct GCOO
         : num_row(mat->rows), num_col(mat->cols), nnz(mat->nnz),
           num_group((mat->rows - 1 + p) / p), rowPtr(mat->rowPtr), cols(mat->dataCol), values(mat->dataVal)
     {
-        printf("hhhhhh\n");
+
         int row_index = 0;
         rows = new int[nnz];
         gIdexs = new int[num_group];
@@ -322,8 +322,8 @@ struct GCOO
                 row_index++;
             }
         }
-        std::cout << row_index << "\n";
-        std::cout << bool(row_index == nnz) << ": row_index == nnz-1\n\n";
+        // std::cout << row_index << "\n";
+        // std::cout << bool(row_index == nnz) << ": row_index == nnz-1\n\n";
 
         for (int i = 0; i < num_group; i++)
         {
@@ -346,66 +346,66 @@ struct GCOO
             }
         }
         // check the transformation:
-        std::cout << "Origin CSR format:\n"
-                  << "number of rows:" << mat->rows << "\n"
-                  << "number of cols:" << mat->cols << "\n"
-                  << "nnz:" << mat->nnz << "\n";
-        std::cout << "rowptr: \n";
-        for (int i = 0; i < mat->rows + 1; i++)
-        {
-            std::cout << mat->rowPtr[i] << ",";
-        }
-        std::cout << "\n";
-        std::cout << "data column:\n";
-        for (int i = 0; i < mat->nnz; i++)
-        {
-            std::cout << mat->dataCol[i] << ",";
-        }
-        std::cout << "\n";
-        std::cout << "data value:\n";
-        for (int i = 0; i < mat->nnz; i++)
-        {
-            std::cout << mat->dataVal[i] << ",";
-        }
-        std::cout << "\n";
-        std::cout << "\n";
+        // std::cout << "Origin CSR format:\n"
+        //           << "number of rows:" << mat->rows << "\n"
+        //           << "number of cols:" << mat->cols << "\n"
+        //           << "nnz:" << mat->nnz << "\n";
+        // std::cout << "rowptr: \n";
+        // for (int i = 0; i < mat->rows + 1; i++)
+        // {
+        //     std::cout << mat->rowPtr[i] << ",";
+        // }
+        // std::cout << "\n";
+        // std::cout << "data column:\n";
+        // for (int i = 0; i < mat->nnz; i++)
+        // {
+        //     std::cout << mat->dataCol[i] << ",";
+        // }
+        // std::cout << "\n";
+        // std::cout << "data value:\n";
+        // for (int i = 0; i < mat->nnz; i++)
+        // {
+        //     std::cout << mat->dataVal[i] << ",";
+        // }
+        // std::cout << "\n";
+        // std::cout << "\n";
 
         std::cout << "Transformed GCOO format:\n"
                   << "number of rows:" << this->num_row << "\n"
                   << "number of cols:" << this->num_col << "\n"
                   << "number of groups:" << this->num_group << "\n"
                   << "nnz:" << this->nnz << "\n";
-        std::cout << "rowptr_new:\n";
-        for (int i = 0; i < this->nnz; i++)
-        {
-            std::cout << this->rows[i] << ",";
-        }
-        std::cout << "\n";
-        std::cout << "colptr:\n";
-        for (int i = 0; i < this->nnz; i++)
-        {
-            std::cout << this->cols[i] << ",";
-        }
-        std::cout << "\n";
-        std::cout << "gidxes:\n";
-        for (int i = 0; i < this->num_group; i++)
-        {
-            std::cout << this->gIdexs[i] << ",";
-        }
-        std::cout << "\n";
-        std::cout << "nnzpergroup:\n";
-        for (int i = 0; i < this->num_group; i++)
-        {
-            std::cout << this->nnzpergroup[i] << ",";
-        }
-        std::cout << "\n";
-        std::cout << "values:\n";
-        for (int i = 0; i < this->nnz; i++)
-        {
-            std::cout << this->values[i] << ",";
-        }
-        std::cout << "\n";
-        std::cout << "\n";
+        // std::cout << "rowptr_new:\n";
+        // for (int i = 0; i < this->nnz; i++)
+        // {
+        //     std::cout << this->rows[i] << ",";
+        // }
+        // std::cout << "\n";
+        // std::cout << "colptr:\n";
+        // for (int i = 0; i < this->nnz; i++)
+        // {
+        //     std::cout << this->cols[i] << ",";
+        // }
+        // std::cout << "\n";
+        // std::cout << "gidxes:\n";
+        // for (int i = 0; i < this->num_group; i++)
+        // {
+        //     std::cout << this->gIdexs[i] << ",";
+        // }
+        // std::cout << "\n";
+        // std::cout << "nnzpergroup:\n";
+        // for (int i = 0; i < this->num_group; i++)
+        // {
+        //     std::cout << this->nnzpergroup[i] << ",";
+        // }
+        // std::cout << "\n";
+        // std::cout << "values:\n";
+        // for (int i = 0; i < this->nnz; i++)
+        // {
+        //     std::cout << this->values[i] << ",";
+        // }
+        // std::cout << "\n";
+        // std::cout << "\n";
     }
     ~GCOO()
     {
