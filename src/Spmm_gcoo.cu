@@ -44,32 +44,31 @@ namespace GCOOSPMM
         // calculate the iteration of current group, b also means the number of thread in a thread block
         int iter = (CurGroupNNZ + b_value - 1) / b_value; // inorder to move all the data of a thread block into the shared memory
 
-        // 遍历当前组中的所有非零元素
         for (int i = 0; i < iter; ++i)
         {
-            int cooOffset = i * b_value; // 计算COO偏移量
+            int cooOffset = i * b_value; // calculate offset
 
             __shared__ double sVals[b_value];
             __shared__ int sCols[b_value];
             __shared__ int sRows[b_value];
 
-            // 加载当前组的COO数据到共享内存
+            // load number of  thread block's nnz number into the shared memory
             if (threadIdx.x < b_value && (cooOffset + threadIdx.x) < CurGroupNNZ)
-            { // 确保不会超出当前组的大小
+            {
                 sVals[threadIdx.x] = vals[cooOffset + threadIdx.x];
                 sCols[threadIdx.x] = co_cols[cooOffset + threadIdx.x];
                 sRows[threadIdx.x] = co_rows[cooOffset + threadIdx.x];
             }
             else
             {
-                // 超出部分的线程不加载任何数据
+
                 sVals[threadIdx.x] = 0;
-                sCols[threadIdx.x] = -1; // 使用-1来标记无效的索引
+                sCols[threadIdx.x] = -1; // -1 for no use
                 sRows[threadIdx.x] = -1;
             }
-            __syncthreads(); // 确保所有线程都加载完数据
+            __syncthreads(); // wait
 
-            // 如果当前线程对应的列索引在B矩阵范围内，则执行计算
+            // calculate
             if (Cj < wB)
             {
                 for (int j = 0; j < b_value && sCols[j] != -1; ++j)
@@ -78,12 +77,12 @@ namespace GCOOSPMM
                     int row = sRows[j];
                     double av = sVals[j];
                     if (col == -1)
-                        continue; // 跳过无效数据
+                        continue;
                     double bv = B[col * wB + Cj];
                     int outIdx = row % p_value;
-                    c[outIdx] += av * bv; // 执行乘加操作
+                    c[outIdx] += av * bv;
 
-                    // 内部循环，用于寻找可以重用bv值的连续非零元素
+                    // reuse bv
                     int k = 1;
                     while (j + k < b_value && sCols[j + k] == col)
                     {
@@ -95,13 +94,13 @@ namespace GCOOSPMM
                         c[outIdx] += av * bv;
                         k++;
                     }
-                    j += k - 1; // 跳过已经处理的元素
+                    j += k - 1; // jump
                 }
             }
-            __syncthreads(); // 等待所有线程完成这一轮计算
+            __syncthreads(); // wait
         }
 
-        // 将中间结果数组c中的值写回到全局内存的C矩阵
+        // load one thread's data into the result matrix
         if (Cj < wB)
         {
             for (int i = 0; i < p_value; ++i)
