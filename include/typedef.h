@@ -1,6 +1,7 @@
 #ifndef TYPEDEF_H
 #define TYPEDEF_H
 
+#include <cstring>
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -179,7 +180,6 @@ struct CSRMatrix
             dataVal = (T *)malloc(nnz * sizeof(T));
             std::fill(dataVal, dataVal + nnz, 1);
         }
-        std::fill(dataVal, dataVal + nnz, 1); // Testing
     }
     ~CSRMatrix()
     {
@@ -198,6 +198,67 @@ struct CSRMatrix
             if (rowPtr != nullptr)
                 free(rowPtr);
         }
+    }
+    void transpose() {
+        int* numRows = (int*)malloc((cols+1) * sizeof(int));
+        std::memset(numRows, 0, sizeof(int) * (cols+1));
+        for (int i = 0; i < nnz; i++)
+            numRows[dataCol[i]+1]++;
+        for (int i = 2; i < cols; i++)
+            numRows[i] += numRows[i-1];
+        int* nDataCol = (int*)malloc(nnz * sizeof(int));
+        double* nDataVal = (double*)malloc(nnz * sizeof(double));
+        for (int i = 0; i < rows; i++)
+            for (int j = rowPtr[i]; j < rowPtr[i+1]; j++) {
+                nDataCol[numRows[dataCol[j]]] = i;
+                nDataVal[numRows[dataCol[j]]] = dataVal[j];
+                numRows[dataCol[j]]++;
+            }
+        for (int i = rows; i > 0; i--)
+            numRows[i] = numRows[i-1];
+        numRows[0] = 0;
+
+        this->replace(nnz, numRows, nDataCol, nDataVal);
+    }
+    void resparse() {
+        int nnnz = 0;
+        for (int i = 0; i < nnz; i++)
+            if (dataVal[i] != 0)
+                nnnz++;
+        int* nRowPtr = (int*)malloc((rows+1) * sizeof(int));
+        int* nDataCol = (int*)malloc(nnnz * sizeof(int));
+        double* nDataVal = (double*)malloc(nnnz * sizeof(double));
+        
+        nnnz = 0;
+        for (int i = 0; i < rows; i++){
+            nRowPtr[i] = nnnz;
+            for (int j = rowPtr[i]; j < rowPtr[i+1]; j++) {
+                if (dataVal[j] != 0)
+                {
+                    nDataCol[nnnz] = dataCol[j];
+                    nDataVal[nnnz] = dataVal[j];
+                    nnnz++;
+                }
+            }
+        }
+        nRowPtr[rows] = nnnz;
+        this->replace(nnnz, nRowPtr, nDataCol, nDataVal);
+    }
+    void replace(int nnnz, int* nRowPtr, int* nDataCol, double* nDataVal) {
+        if (src != nullptr) {
+            if (src->value_type == value_type_t::PATTERN)
+                free(dataVal);
+            destroy_csr_matrix(src);
+        }
+        else {
+            free(this->rowPtr);
+            free(this->dataCol);
+            free(this->dataVal);
+        }
+        this->rowPtr = nRowPtr;
+        this->dataCol = nDataCol;
+        this->dataVal = nDataVal;
+        this->nnz = nnnz;
     }
     void info()
     {
@@ -478,7 +539,6 @@ std::ostream &operator<<(std::ostream &stream, CSRMatrix<T> *mat)
 {
     if (mat->rowPtr == nullptr || mat->dataCol == nullptr || mat->dataVal == nullptr)
         return stream << "Invalid Matrix";
-
     stream << "CSRMatrix:" << mat->rows << "x" << mat->cols << ": " << mat->nnz << std::endl;
 
     stream << "rowPtr: ";
@@ -505,9 +565,25 @@ std::ostream &operator<<(std::ostream &stream, CSRMatrix<T> *mat)
             else
                 stream << "0\t";
         }
+        if (r != mat->rows-1) stream << std::endl;
+    }
+    /*
+    stream << "{ rows = " << mat->rows << ", cols = " << mat->cols << ", nnz = " << mat->nnz << "," << std::endl;
+    stream << "rowPtr = { " << mat->rowPtr[0];
+    for(int i = 1; i < mat->rows+1; i++)
+        stream << ", " << mat->rowPtr[i];
+    stream << " }" << std::endl;
+    stream << "dataCol = { " << mat->dataCol[0];
+    for(int i = 1; i < mat->nnz; i++)
+        stream << ", " << mat->dataCol[i];
+    stream << " }" << std::endl;
+    stream << "dataVal = { " << mat->dataVal[0];
+    for(int i = 1; i < mat->nnz; i++)
+        stream << ", " << mat->dataVal[i];
+    stream << " }" << std::endl << "}";
         if (r != mat->rows - 1)
             stream << std::endl;
-    }
+    }*/
     return stream;
 }
 

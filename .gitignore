@@ -1,4 +1,12 @@
 results/*
+spgemm
+spgemm_p
+*.out
 .vscode/*
-sparse
-profile
+
+spgemm
+spgemm_profile
+spmspv
+spmspv_profile
+spmm
+spmm_profile
