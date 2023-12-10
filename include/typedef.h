@@ -327,7 +327,7 @@ struct GCOO
 
         for (int i = 0; i < num_group; i++)
         {
-            gIdexs[i] = i * num_group;
+
             if ((i + 1) * p <= mat->rows)
             {
                 nnzpergroup[i] = rowPtr[(i + 1) * p] - rowPtr[i * p];
@@ -336,13 +336,21 @@ struct GCOO
             {
                 nnzpergroup[i] = rowPtr[mat->rows] - rowPtr[i * p]; // the last group
             }
+            if (i == 0)
+            {
+                gIdexs[0] = 0;
+            }
+            else
+            {
+                gIdexs[i] = gIdexs[i - 1] + nnzpergroup[i - 1];
+            }
         }
         // check the transformation:
         std::cout << "Origin CSR format:\n"
                   << "number of rows:" << mat->rows << "\n"
                   << "number of cols:" << mat->cols << "\n"
-                  << "nnz:" << mat->nnz << "\n"
-                  << "rowptr:" << mat->rowPtr << "\n";
+                  << "nnz:" << mat->nnz << "\n";
+        std::cout << "rowptr: \n";
         for (int i = 0; i < mat->rows + 1; i++)
         {
             std::cout << mat->rowPtr[i] << ",";
@@ -405,14 +413,14 @@ struct GCOO
             free(nnzpergroup);
         if (gIdexs != nullptr)
             free(gIdexs);
-        if (cols != nullptr)
-            free(cols);
+        // if (cols != nullptr)
+        //     free(cols);
         if (rows != nullptr)
             free(rows);
-        if (values != nullptr)
-            free(values);
-        if (rowPtr != nullptr)
-            free(rowPtr);
+        // if (values != nullptr)
+        //     free(values);
+        // if (rowPtr != nullptr)
+        //     free(rowPtr);
     }
     void info()
     {
