@@ -8,13 +8,16 @@
 #SBATCH --gpus-per-task=1
 
 #export SLURM_CPU_BIND="cores"
+
+
 profile() {
-    srun nsys profile -s none --trace=cuda,nvtx,osrt,cusparse --force-overwrite true -o results/$3$1.nsys-rep ./spgemm_p data/$1/$1.rb $2 > results/$3$1.txt
+    nsys profile -s none --trace=cuda,nvtx,osrt,cusparse --force-overwrite true -o $RESULTS_PATH/$3$1.nsys-rep ./spgemm_p data/$1/$1.rb $2 > $RESULTS_PATH/$3$1.txt
 }
 run() {
-    ./spgemm data/$1/$1.rb $2 > results/$3$1.txt
+    srun ./spgemm data/$1/$1.rb $2 > $RESULTS_PATH/$3$1.txt
 }
 
+RESULTS_PATH='results'
 DATASETS=$(ls ./data | grep -Po "^[a-zA-Z0-9\_]+" | sort | uniq | grep -P "(GD|Ha)")
 LEN=$(echo ${DATASETS[@]} | wc -w)
 DACC=0
@@ -22,10 +25,10 @@ SACC=0
 
 for dataset in ${DATASETS[@]}; do
     run $dataset 0 dacc_
-    DACC=$(echo $DACC+$(grep -Po "Cuda Result matches CuSparse Result" results/dacc_$dataset.txt | wc -l) | bc)
+    DACC=$(echo $DACC+$(grep -Po "Cuda Result matches CuSparse Result" $RESULTS_PATH/dacc_$dataset.txt | wc -l) | bc)
 
     run $dataset 1 sacc_
-    SACC=$(echo $SACC+$(grep -Po "Cuda Result matches CuSparse Result" results/sacc_$dataset.txt | wc -l) | bc)
+    SACC=$(echo $SACC+$(grep -Po "Cuda Result matches CuSparse Result" $RESULTS_PATH/sacc_$dataset.txt | wc -l) | bc)
 done
 
 if [[ $DACC -eq $LEN ]]; then

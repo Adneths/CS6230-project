@@ -11,11 +11,6 @@
 #include <nvtx3/nvToolsExtCuda.h>
 #endif
 
-
-
-
-#include <inttypes.h>
-
 namespace cuda {
 
 __global__ void dacc_spgemm_preprocess(int* maxRow, int* rowPtr, int len) {
@@ -75,7 +70,6 @@ CSRMatrix<double>* dacc_spgemm(CSRMatrix<double>* A, CSRMatrix<double>* B) {
     cudaMalloc(&d_colIdxB, colIdxB_size);
     cudaMalloc(&d_valsB, valsB_size);
     cudaMalloc(&d_valsC, valsC_size);
-
     cudaMalloc(&d_maxRow, sizeof(int));
 
 #ifdef PROFILE
